@@ -439,7 +439,7 @@
     </footer>
 
     <!-- MODAL -->
-    <div id="modalOverlay" class="modal-overlay" onclick="if(event.target===this)modalClose()">
+    <div id="modalOverlay" class="modal-overlay" onclick="if(event.target===this){modalCallback=null;modalClose();}">
         <div class="modal-box">
             <h3 id="modalTitle" class="font-condensed text-base font-bold text-inst-dark uppercase tracking-wide mb-2">Confirmar</h3>
             <p id="modalMsg" class="text-sm text-gray-500 mb-5">Tem certeza?</p>
@@ -578,24 +578,33 @@
     // MODAL
     // ============================================================
     let modalCallback = null;
+    let modalResolve = null; // para promessas
 
     function modalOpen(title, msg, onConfirm) {
+        const overlay = document.getElementById('modalOverlay');
         document.getElementById('modalTitle').textContent = title;
-        
-        // ALTERE ESTA LINHA ABAIXO (de textContent para innerHTML):
         document.getElementById('modalMsg').innerHTML = msg;
-        
-        document.getElementById('modalOverlay').classList.add('open');
+        overlay.classList.add('open');
         modalCallback = onConfirm;
-        document.getElementById('modalConfirmBtn').onclick = () => {
+
+        const btn = document.getElementById('modalConfirmBtn');
+        // Resetar o botão para o estado padrão
+        btn.textContent = 'Remover';
+        btn.className = 'btn btn-danger';
+        // Remover todos os listeners (clonagem)
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        // Adicionar o listener correto
+        newBtn.addEventListener('click', function handler() {
+            const cb = modalCallback;   // salva referência local
+            modalCallback = null;       // limpa antes de fechar
             modalClose();
-            if (modalCallback) modalCallback();
-        };
+            if (cb) cb();               // executa após fechar
+        });
     }
 
     function modalClose() {
         document.getElementById('modalOverlay').classList.remove('open');
-        modalCallback = null;
     }
 
     // ============================================================
@@ -902,6 +911,7 @@
     function reuniaoRemove(id) {
         const item = appState.reunioes.find(r => r.id === id);
         modalOpen('Remover Reunião', `Deseja realmente remover "${item ? item.titulo : ''}"?`, () => {
+            console.log('Excluindo reunião ID:', id);
             appState.reunioes = appState.reunioes.filter(r => r.id !== id);
             dbSave();
             reuniaoRender();
@@ -961,16 +971,6 @@
         input.value = '';
         kanbanRender();
         toast('Tarefa capturada na Caixa de Entrada');
-    }
-
-    function kanbanRemove(id) {
-        const item = appState.kanban.find(t => t.id === id);
-        modalOpen('Remover Tarefa', `Deseja remover "${item ? item.text : ''}"?`, () => {
-            appState.kanban = appState.kanban.filter(t => t.id !== id);
-            dbSave();
-            kanbanRender();
-            toast('Tarefa removida');
-        });
     }
 
     function kanbanDragStart(e) {
@@ -1097,13 +1097,12 @@
         appState.links[key].itens.push({ nome, url });
         dbSave();
         toggleInlineForm(key);
+        linksRenderFilters();  // renderiza filtros ANTES do grid
         linksRender();
-        linksRenderFilters();
-        document.querySelectorAll('.ftab').forEach(b => {
-            if ((linkFilter === 'all' && b.dataset.f === 'all') || b.dataset.f === linkFilter) b.classList.add('active');
-            else b.classList.remove('active');
-        });
-        linkSetFilter(linkFilter, document.querySelector(`.ftab[data-f="${linkFilter}"]`));
+        // agora o querySelector tem o DOM atualizado
+        const activeBtn = document.querySelector(`.ftab[data-f="${linkFilter}"]`)
+                       || document.querySelector('.ftab[data-f="all"]');
+        if (activeBtn) linkSetFilter(linkFilter, activeBtn);
         toast('Link adicionado');
     }
 
@@ -1157,6 +1156,13 @@
                             ? imported.links[key].itens
                             : DEFAULT_STATE.links[key].itens
                     };
+                }
+                if (imported.links) {
+                    for (const key in imported.links) {
+                        if (!appState.links[key]) {
+                            appState.links[key] = imported.links[key];
+                        }
+                    }
                 }
                 dbSave();
                 renderAll();
@@ -1273,16 +1279,18 @@
         `;
 
         // Abre usando o modal padrão do seu dashboard
-        modalOpen('Definir Página Inicial', passoPasso, null);
-        
-        // Ajusta o botão do modal para agir apenas como um "Entendi"
-        const btnConfirmar = document.getElementById('modalConfirmBtn');
-        if (btnConfirmar) {
-            btnConfirmar.textContent = "Entendi";
-            btnConfirmar.className = "btn btn-primary"; // Muda de vermelho para azul
-        }
+        modalOpen('Definir Página Inicial', passoPasso, () => {});
+        setTimeout(() => {
+            const btn = document.getElementById('modalConfirmBtn');
+            btn.textContent = 'Entendi';
+            btn.className = 'btn btn-primary';
+            // Substituir o listener para apenas fechar
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', modalClose);
+        }, 50);
     }
-
+        
     init();
     </script>
 </body>
