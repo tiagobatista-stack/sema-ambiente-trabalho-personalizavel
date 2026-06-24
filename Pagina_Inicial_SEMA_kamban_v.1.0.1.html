@@ -123,6 +123,15 @@
         .kanban-card[data-status="doing"]::before { background: #2563eb; }
         .kanban-card[data-status="done"]::before { background: #16a34a; }
 
+        .kanban-col-wrapper.drag-over { background: #e8edf8; outline: 2px dashed #3b82f6; outline-offset: -2px; }
+        .kanban-scroll { max-height: 420px; overflow-y: auto; }
+        .kanban-scroll::-webkit-scrollbar { width: 5px; }
+        .kanban-scroll::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 3px; }
+        .kanban-scroll::-webkit-scrollbar-track { background: transparent; }
+        .kanban-note-btn { padding: 3px; border: none; background: transparent; cursor: pointer; border-radius: 4px; transition: all 0.2s; color: #9ca3af; display: inline-flex; align-items: center; justify-content: center; }
+        .kanban-note-btn:hover { color: #1e2a5e; background: #eef2ff; }
+        .kanban-note-btn.has-notes { color: #2563eb; }
+
         /* ===== FILTROS ===== */
         .ftab {
             padding: 5px 14px; font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
@@ -245,7 +254,6 @@
                 </div>
             </section>
 
-            <!-- PONTO-->
             <!-- PONTO / CALCULADORA DE JORNADA FLEXÍVEL (DIRETA OU COM INTERVALO) -->
             <section class="card anim" style="animation-delay:0.1s;">
                 <div class="card-header justify-between flex-wrap gap-2">
@@ -269,7 +277,6 @@
                             <input type="time" id="ponto_entrada1" class="inp w-full mt-1" value="11:00" oninput="calcularSaidaAutomatica()">
                         </div>
                         
-                        <!-- Esses campos sumirão automaticamente na jornada de 6h -->
                         <div id="container_saida1">
                             <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Saída 1 (Almoço)</label>
                             <input type="time" id="ponto_saida1" class="inp w-full mt-1" value="11:00" oninput="calcularSaidaAutomatica()">
@@ -295,11 +302,11 @@
             <section class="card anim" style="animation-delay:0.15s;">
                 <div class="card-header">
                     <div class="ico purple"><i data-lucide="users" class="w-[18px] h-[18px]"></i></div>
-                    <div><h2 class="font-condensed text-sm font-bold uppercase tracking-wide text-inst-dark">Reuniões</h2></div>
+                    <div><h2 class="font-condensed text-sm font-bold uppercase tracking-wide text-inst-dark">Reuniões/Atividades</h2></div>
                 </div>
                 <div class="p-4">
                     <div class="space-y-2 mb-3">
-                        <input type="text" id="reuniaoTitulo" class="inp w-full" placeholder="Assunto da reunião">
+                        <input type="text" id="reuniaoTitulo" class="inp w-full" placeholder="Assunto">
                         <div class="grid grid-cols-2 gap-2">
                             <input type="date" id="reuniaoData" class="inp w-full">
                             <input type="time" id="reuniaoHora" class="inp w-full">
@@ -365,7 +372,7 @@
                             <span class="flex items-center gap-1.5"><i data-lucide="inbox" class="w-3.5 h-3.5"></i> Caixa de Entrada</span>
                             <span id="countInbox" class="text-[10px] bg-purple-100 px-2 py-0.5 rounded-full">0</span>
                         </div>
-                        <div id="kanbanInbox" class="space-y-2 min-h-[180px]" data-status="inbox" ondragover="kanbanDragOver(event)" ondrop="kanbanDrop(event)" ondragleave="kanbanDragLeave(event)"></div>
+                        <div id="kanbanInbox" class="space-y-2 min-h-[180px] kanban-scroll" data-status="inbox" ondragover="kanbanDragOver(event)" ondrop="kanbanDrop(event)" ondragleave="kanbanDragLeave(event)"></div>
                     </div>
 
                     <div class="kanban-col-wrapper">
@@ -387,9 +394,13 @@
                     <div class="kanban-col-wrapper">
                         <div class="kanban-col-header text-green-600 border-b-2 border-green-200">
                             <span class="flex items-center gap-1.5"><i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Concluído</span>
-                            <span id="countDone" class="text-[10px] bg-green-100 px-2 py-0.5 rounded-full">0</span>
+                            <div class="flex items-center gap-1">
+                                <span id="countDone" class="text-[10px] bg-green-100 px-2 py-0.5 rounded-full">0</span>
+                                <button class="btn btn-sm text-green-600 hover:bg-green-100" style="padding:2px 6px;font-size:10px;border:none;background:transparent;" onclick="exportarConcluidos()" title="Exportar Concluídos"><i data-lucide="download" class="w-3 h-3"></i></button>
+                                <button class="btn btn-sm text-red-500 hover:bg-red-50" style="padding:2px 6px;font-size:10px;border:none;background:transparent;" onclick="limparConcluidos()" title="Limpar Concluídos"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                            </div>
                         </div>
-                        <div id="kanbanDone" class="space-y-2 min-h-[180px]" data-status="done" ondragover="kanbanDragOver(event)" ondrop="kanbanDrop(event)" ondragleave="kanbanDragLeave(event)"></div>
+                        <div id="kanbanDone" class="space-y-2 min-h-[180px] kanban-scroll" data-status="done" ondragover="kanbanDragOver(event)" ondrop="kanbanDrop(event)" ondragleave="kanbanDragLeave(event)"></div>
                     </div>
                 </div>
             </div>
@@ -432,7 +443,7 @@
     <footer style="background:#1e2a5e;" class="mt-6">
         <div class="max-w-7xl mx-auto px-4 md:px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-2">
             <div class="text-xs text-white/70 font-normal">
-                Secretaria de Estado de Meio Ambiente · Mato Grosso · <span class="bg-blue-900/50 px-2 py-0.5 rounded text-white/90 text-[10px] font-bold">v1.0.0</span>
+                Secretaria de Estado de Meio Ambiente · Mato Grosso · <span class="bg-blue-900/50 px-2 py-0.5 rounded text-white/90 text-[10px] font-bold">v1.0.1</span>
             </div>
             <span class="text-[11px] text-white/40">© 2026 SEMA-MT — Dashboard de Produtividade · Dev: Tiago Alexandre Batista</span>
         </div>
@@ -457,7 +468,7 @@
     // ESTADO PADRÃO E PERSISTÊNCIA
     // ============================================================
     const DB_KEY = 'sema_db_json_v2';
-    const CIRC = 2 * Math.PI * 76; // ~477.52
+    const CIRC = 2 * Math.PI * 76;
 
     const DEFAULT_STATE = {
         ponto: { entrada1: '07:00', saida1: '11:00', entrada2: '13:00', saida2: '17:00' },
@@ -578,9 +589,8 @@
     // MODAL
     // ============================================================
     let modalCallback = null;
-    let modalResolve = null; // para promessas
 
-    function modalOpen(title, msg, onConfirm) {
+    function modalOpen(title, msg, onConfirm, options = {}) {
         const overlay = document.getElementById('modalOverlay');
         document.getElementById('modalTitle').textContent = title;
         document.getElementById('modalMsg').innerHTML = msg;
@@ -588,18 +598,15 @@
         modalCallback = onConfirm;
 
         const btn = document.getElementById('modalConfirmBtn');
-        // Resetar o botão para o estado padrão
-        btn.textContent = 'Remover';
-        btn.className = 'btn btn-danger';
-        // Remover todos os listeners (clonagem)
+        btn.textContent = options.btnText || 'Remover';
+        btn.className = options.btnClass || 'btn btn-danger';
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
-        // Adicionar o listener correto
         newBtn.addEventListener('click', function handler() {
-            const cb = modalCallback;   // salva referência local
-            modalCallback = null;       // limpa antes de fechar
+            const cb = modalCallback;
+            modalCallback = null;
             modalClose();
-            if (cb) cb();               // executa após fechar
+            if (cb) cb();
         });
     }
 
@@ -625,22 +632,20 @@
     // PONTO ELETRÔNICO & CALCULADORA DE JORNADA FLEXÍVEL
     // ============================================================
     let pontoAlerted = {};
-    let minutosJornadaTotal = 480; 
+    let minutosJornadaTotal = 480;
 
     function setJornada(minutos, botao) {
         minutosJornadaTotal = minutos;
-        
-        // Alterna o estilo visual dos botões
+
         document.getElementById('btn_jornada8').className = "px-2 py-0.5 text-[10px] font-bold uppercase rounded " + (minutos === 480 ? "text-white bg-inst-dark" : "text-gray-500 hover:text-inst-dark");
         document.getElementById('btn_jornada6').className = "px-2 py-0.5 text-[10px] font-bold uppercase rounded " + (minutos === 360 ? "text-white bg-inst-dark" : "text-gray-500 hover:text-inst-dark");
-        
-        // Mostra/Esconde os campos de intervalo com base na jornada de 6h ou 8h
+
         const displayStyle = minutos === 360 ? 'none' : '';
         document.getElementById('container_saida1').style.display = displayStyle;
         document.getElementById('container_entrada2').style.display = displayStyle;
 
         appState.ponto.jornadaMinutos = minutos;
-        
+
         calcularSaidaAutomatica();
     }
 
@@ -648,7 +653,7 @@
         document.getElementById('ponto_entrada1').value = appState.ponto.entrada1 || '';
         document.getElementById('ponto_saida1').value = appState.ponto.saida1 || '';
         document.getElementById('ponto_entrada2').value = appState.ponto.entrada2 || '';
-        
+
         if (appState.ponto.jornadaMinutos) {
             const btnId = appState.ponto.jornadaMinutos === 360 ? 'btn_jornada6' : 'btn_jornada8';
             setJornada(appState.ponto.jornadaMinutos, document.getElementById(btnId));
@@ -670,10 +675,8 @@
         let minSaida2Ideal = 0;
 
         if (minutosJornadaTotal === 360) {
-            // JORNADA DE 6h: Soma 6 horas (360 minutos) direto à Entrada 1
             minSaida2Ideal = minE1 + 360;
         } else {
-            // JORNADA DE 8h: Usa os intervalos tradicionais de almoço
             const s1 = document.getElementById('ponto_saida1').value;
             const e2 = document.getElementById('ponto_entrada2').value;
 
@@ -699,9 +702,9 @@
         const minutosFinal = minSaida2Ideal % 60;
 
         const resultadoFormatado = String(horasFinal).padStart(2, '0') + ':' + String(minutosFinal).padStart(2, '0');
-        
+
         campoSaida2.value = resultadoFormatado;
-        appState.ponto.saida2 = resultadoFormatado; 
+        appState.ponto.saida2 = resultadoFormatado;
     }
 
     function converteParaMinutos(horarioStr) {
@@ -711,16 +714,16 @@
 
     function pontoSalvar() {
         calcularSaidaAutomatica();
-        
+
         appState.ponto.entrada1 = document.getElementById('ponto_entrada1').value;
         appState.ponto.saida1 = document.getElementById('ponto_saida1').value;
         appState.ponto.entrada2 = document.getElementById('ponto_entrada2').value;
         appState.ponto.saida2 = document.getElementById('ponto_saida2').value;
         appState.ponto.jornadaMinutos = minutosJornadaTotal;
-        
+
         pontoAlerted = {};
         dbSave();
-        
+
         const labelJornada = minutosJornadaTotal === 360 ? '6h Diretas' : '8h Intercaladas';
         toast(`Configurado jornada de ${labelJornada}. Saída prevista para às ${appState.ponto.saida2}`);
     }
@@ -728,39 +731,37 @@
     function pontoCheck() {
         const now = new Date();
         const hm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
-        
+
         const e1 = appState.ponto.entrada1;
         const s2 = appState.ponto.saida2;
 
-        // ALERTA DE METADE DO TURNO (3h para quem faz 6h / 4h para quem faz 8h)
         if (e1) {
             const minE1 = converteParaMinutos(e1);
-            const minutosMetaTurno = minutosJornadaTotal === 360 ? 180 : 240; 
+            const minutosMetaTurno = minutosJornadaTotal === 360 ? 180 : 240;
             const minMetaManha = minE1 + minutosMetaTurno;
-            
+
             const horasM = Math.floor(minMetaManha / 60);
             const minutosM = minMetaManha % 60;
             const horarioMetaManha = String(horasM).padStart(2, '0') + ':' + String(minutosM).padStart(2, '0');
 
             if (hm === horarioMetaManha && !pontoAlerted['metaManha']) {
                 pontoAlerted['metaManha'] = true;
-                playBeep(587.33, 250, 2); 
+                playBeep(587.33, 250, 2);
                 const textoTurno = minutosJornadaTotal === 360 ? '3h' : '4h';
-                toast(`⏳ Alerta de Turno: Você completou ${textoTurno} de expediente!`, 'warning');
+                toast(`Alerta de Turno: Você completou ${textoTurno} de expediente!`, 'warning');
             }
         }
 
-        // ALERTA DA SAÍDA FINAL (FIM DA JORNADA)
         if (s2 && hm === s2 && !pontoAlerted['saida2']) {
             pontoAlerted['saida2'] = true;
-            playBeep(880, 200, 3); 
+            playBeep(880, 200, 3);
             const labelCompleta = minutosJornadaTotal === 360 ? '6h' : '8h';
-            toast(`🎉 Jornada Cumprida! — Fim do Expediente: ${hm} (${labelCompleta} completadas).`, 'success');
+            toast(`Jornada Cumprida! — Fim do Expediente: ${hm} (${labelCompleta} completadas).`, 'success');
         }
 
         if (e1 && hm === e1 && !pontoAlerted['entrada1']) {
             pontoAlerted['entrada1'] = true;
-            toast(`⏰ Ponto Registrado — Entrada 1: ${hm}`, 'warning');
+            toast(`Ponto Registrado — Entrada 1: ${hm}`, 'warning');
         }
     }
 
@@ -791,6 +792,14 @@
         }
     }
 
+    function pomoAtualizarCorAnel() {
+        const ring = document.getElementById('pomoRing');
+        if (!ring) return;
+        const minutos = pomo.total / 60;
+        if (minutos <= 5) ring.classList.add('break-c');
+        else ring.classList.remove('break-c');
+    }
+
     function pomoStart() {
         if (pomo.running) return;
         if (pomo.timeLeft === pomo.total || pomo.timeLeft <= 0) {
@@ -798,6 +807,7 @@
             pomo.total = Math.max(1, Math.min(60, val)) * 60;
             pomo.timeLeft = pomo.total;
         }
+        pomoAtualizarCorAnel();
         pomo.running = true;
         pomoUpdateStatus('running');
         document.getElementById('pomoStartBtn').style.display = 'none';
@@ -812,7 +822,7 @@
                 document.getElementById('pomoStartBtn').innerHTML = '<i data-lucide="play" class="w-3.5 h-3.5"></i> Iniciar';
                 lucide.createIcons();
                 playBeep(880, 200, 3);
-                toast('🍅 Pomodoro concluído!', 'success');
+                toast('Pomodoro concluído!', 'success');
                 document.title = 'SEMA-MT · Dashboard de Produtividade';
                 return;
             }
@@ -843,12 +853,7 @@
         pomo.total = Math.max(1, Math.min(60, val)) * 60;
         pomo.timeLeft = pomo.total;
         pomoUpdateStatus('stopped');
-        
-        const ring = document.getElementById('pomoRing');
-        if (ring) {
-            if (val <= 5) ring.classList.add('break-c');
-            else ring.classList.remove('break-c');
-        }
+        pomoAtualizarCorAnel();
 
         document.getElementById('pomoStartBtn').style.display = '';
         document.getElementById('pomoPauseBtn').style.display = 'none';
@@ -910,8 +915,7 @@
 
     function reuniaoRemove(id) {
         const item = appState.reunioes.find(r => r.id === id);
-        modalOpen('Remover Reunião', `Deseja realmente remover "${item ? item.titulo : ''}"?`, () => {
-            console.log('Excluindo reunião ID:', id);
+        modalOpen('Remover Reunião', `Deseja realmente remover "${item ? escHtml(item.titulo) : ''}"?`, () => {
             appState.reunioes = appState.reunioes.filter(r => r.id !== id);
             dbSave();
             reuniaoRender();
@@ -926,7 +930,7 @@
 
     function kanbanRender() {
         const statuses = ['inbox', 'todo', 'doing', 'done'];
-        
+
         const cInbox = appState.kanban.filter(t => t.status === 'inbox').length;
         const cTodo = appState.kanban.filter(t => t.status === 'todo').length;
         const cDoing = appState.kanban.filter(t => t.status === 'doing').length;
@@ -935,17 +939,33 @@
         statuses.forEach(status => {
             const col = document.getElementById('kanban' + status.charAt(0).toUpperCase() + status.slice(1));
             if (!col) return;
-            
+
             const items = appState.kanban.filter(t => t.status === status);
-            col.innerHTML = items.map(t => `
+            col.innerHTML = items.map(t => {
+                let infoHtml = '';
+                if (status === 'done') {
+                    infoHtml = `<div class="text-[10px] text-gray-400 mt-1">In\u00edcio: ${t.dataInicio || '--'} \u00b7 T\u00e9rmino: ${t.dataTermino || '--'}</div>`;
+                } else if (status === 'doing' && t.dataInicio) {
+                    infoHtml = `<div class="text-[10px] text-gray-400 mt-1">In\u00edcio: ${t.dataInicio}</div>`;
+                }
+                return `
                 <div class="kanban-card" draggable="true" data-id="${t.id}" data-status="${status}"
-                     ondragstart="kanbanDragStart(event)">
-                    <span class="flex-1 pr-2 text-gray-700 font-medium">${escHtml(t.text)}</span>
-                    <button class="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0" onclick="kanbanRemove(${t.id})">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
+                     ondragstart="kanbanDragStart(event)" ondragend="kanbanDragEnd(event)">
+                    <div class="flex-1 pr-2">
+                        <div class="text-gray-700 font-medium">${escHtml(t.text)}</div>
+                        ${infoHtml}
+                        ${t.anotacoes ? (function(){ try{var a=JSON.parse(t.anotacoes);if(a&&a.lista){var f=a.lista.filter(function(i){return i.feito}).length;return '<div class="text-[10px] text-blue-400 mt-1 truncate">Checklist '+f+'/'+a.lista.length+'</div>'}return ''}catch(e){return '<div class="text-[10px] text-blue-400 mt-1 truncate">\u2713 Anota\u00e7\u00f5es</div>'}})() : ''}
+                    </div>
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                        <button class="kanban-note-btn ${t.anotacoes ? 'has-notes' : ''}" onclick="kanbanEditarAnotacoes(${t.id})" title="${t.anotacoes ? 'Editar anota\u00e7\u00f5es' : 'Adicionar anota\u00e7\u00f5es'}">
+                            <i data-lucide="clipboard" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button class="text-gray-300 hover:text-red-500 transition-colors" onclick="kanbanRemove(${t.id})">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
                 </div>
-            `).join('');
+            `}).join('');
         });
 
         document.getElementById('countInbox').textContent = cInbox;
@@ -965,8 +985,8 @@
         const input = document.getElementById('kanbanInput');
         const text = input.value.trim();
         if (!text) { toast('Digite uma tarefa', 'error'); return; }
-        
-        appState.kanban.push({ id: Date.now(), text, status: 'inbox' });
+
+        appState.kanban.push({ id: Date.now(), text, status: 'inbox', dataCriacao: new Date().toISOString().split('T')[0], anotacoes: '', ultimaAtualizacao: '' });
         dbSave();
         input.value = '';
         kanbanRender();
@@ -978,6 +998,13 @@
         e.target.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
     }
+
+    function kanbanDragEnd(e) {
+        e.target.classList.remove('dragging');
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        dragId = null;
+    }
+
     function kanbanDragOver(e) {
         e.preventDefault();
         e.currentTarget.classList.add('drag-over');
@@ -989,7 +1016,7 @@
         e.preventDefault();
         e.currentTarget.classList.remove('drag-over');
         const newStatus = e.currentTarget.dataset.status;
-        
+
         if (newStatus === 'doing' && appState.kanban.filter(t => t.status === 'doing').length >= 3) {
             toast('Limite WIP atingido! Máximo de 3 tarefas em andamento.', 'error');
             document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
@@ -998,6 +1025,12 @@
 
         const task = appState.kanban.find(t => t.id === dragId);
         if (task && newStatus) {
+            if (newStatus === 'doing' && !task.dataInicio) {
+                task.dataInicio = new Date().toISOString().split('T')[0];
+            }
+            if (newStatus === 'done') {
+                task.dataTermino = new Date().toISOString().split('T')[0];
+            }
             task.status = newStatus;
             dbSave();
             kanbanRender();
@@ -1005,17 +1038,154 @@
         dragId = null;
         document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
     }
-    
+
     function kanbanRemove(id) {
-        // Remove o item diretamente do estado sem abrir o modal de confirmação
-        appState.kanban = appState.kanban.filter(t => t.id !== id);
-        
-        // Salva as alterações no banco de dados local e atualiza a tela
-        dbSave();
-        kanbanRender();
-        
-        // Exibe o balão de aviso no canto da tela
-        toast('Tarefa removida com sucesso');
+        const task = appState.kanban.find(t => t.id === id);
+        modalOpen('Remover Tarefa', `Deseja remover "${task ? escHtml(task.text) : ''}"?`, () => {
+            appState.kanban = appState.kanban.filter(t => t.id !== id);
+            dbSave();
+            kanbanRender();
+            toast('Tarefa removida');
+        });
+    }
+
+    function parseAnotacoes(anotacoes) {
+        if (!anotacoes) return { lista: [], notas: '' };
+        try {
+            const parsed = JSON.parse(anotacoes);
+            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.lista)) return parsed;
+        } catch(e) {}
+        return { lista: [], notas: typeof anotacoes === 'string' ? anotacoes : '' };
+    }
+
+    function stringifyAnotacoes(data) {
+        return JSON.stringify(data);
+    }
+
+    function kanbanEditarAnotacoes(id) {
+        const task = appState.kanban.find(t => t.id === id);
+        if (!task) return;
+
+        const dados = parseAnotacoes(task.anotacoes);
+
+        const overlay = document.getElementById('modalOverlay');
+        document.getElementById('modalTitle').textContent = 'Anota\u00e7\u00f5es da Tarefa';
+        document.getElementById('modalMsg').innerHTML = `
+            <div class="text-xs text-gray-500 mb-2 font-semibold">${escHtml(task.text)}</div>
+            <div class="space-y-2 mb-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Checklist</span>
+                    <span id="checklistStatus" class="text-[10px] font-bold text-blue-600">0/0</span>
+                </div>
+                <div id="checklistContainer" class="space-y-1 max-h-48 overflow-y-auto"></div>
+                <div class="flex gap-2">
+                    <input type="text" id="novoItemChecklist" class="inp flex-1 text-xs" placeholder="Novo item..." onkeydown="if(event.key==='Enter')adicionarItemChecklist()">
+                    <button class="btn btn-sm btn-primary" onclick="adicionarItemChecklist()">+</button>
+                </div>
+            </div>
+            <div class="border-t border-gray-100 pt-2">
+                <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Observa\u00e7\u00f5es</label>
+                <textarea id="notasTextarea" class="inp w-full" style="min-height:60px;resize:vertical;font-size:0.82rem;line-height:1.5;" placeholder="Informa\u00e7\u00f5es adicionais...">${escHtml(dados.notas)}</textarea>
+            </div>
+        `;
+        overlay.classList.add('open');
+
+        window._checklistData = dados.lista;
+        window._taskRef = task;
+        renderChecklist();
+
+        const btn = document.getElementById('modalConfirmBtn');
+        btn.textContent = 'Salvar Anota\u00e7\u00f5es';
+        btn.className = 'btn btn-primary';
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        newBtn.addEventListener('click', function handler() {
+            const notasEl = document.getElementById('notasTextarea');
+            const dadosFinal = { lista: window._checklistData || [], notas: notasEl ? notasEl.value : '' };
+            task.anotacoes = stringifyAnotacoes(dadosFinal);
+            task.ultimaAtualizacao = new Date().toISOString();
+            dbSave();
+            kanbanRender();
+            window._checklistData = null;
+            window._taskRef = null;
+            toast('Anota\u00e7\u00f5es salvas');
+            modalClose();
+        });
+    }
+
+    function renderChecklist() {
+        const container = document.getElementById('checklistContainer');
+        const statusEl = document.getElementById('checklistStatus');
+        if (!container) return;
+        const lista = window._checklistData || [];
+        const feitos = lista.filter(i => i.feito).length;
+        if (statusEl) statusEl.textContent = feitos + '/' + lista.length;
+        container.innerHTML = lista.map((item, idx) => `
+            <div class="flex items-center gap-2 py-1 px-1 rounded hover:bg-gray-50 text-xs">
+                <input type="checkbox" ${item.feito ? 'checked' : ''} onchange="toggleChecklistItem(${idx}, this.checked)" class="w-3.5 h-3.5 accent-blue-600 cursor-pointer flex-shrink-0">
+                <span class="flex-1 ${item.feito ? 'line-through text-gray-400' : 'text-gray-700'}">${escHtml(item.texto)}</span>
+                <button class="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0" onclick="removerChecklistItem(${idx})" style="padding:1px 3px;border:none;background:transparent;cursor:pointer;">
+                    <i data-lucide="x" class="w-3 h-3"></i>
+                </button>
+            </div>
+        `).join('');
+        lucide.createIcons();
+    }
+
+    function adicionarItemChecklist() {
+        const input = document.getElementById('novoItemChecklist');
+        const texto = input.value.trim();
+        if (!texto) return;
+        if (!window._checklistData) window._checklistData = [];
+        window._checklistData.push({ texto, feito: false });
+        input.value = '';
+        renderChecklist();
+    }
+
+    function toggleChecklistItem(idx, checked) {
+        if (window._checklistData && window._checklistData[idx]) {
+            window._checklistData[idx].feito = checked;
+            renderChecklist();
+        }
+    }
+
+    function removerChecklistItem(idx) {
+        if (window._checklistData) {
+            window._checklistData.splice(idx, 1);
+            renderChecklist();
+        }
+    }
+
+    function exportarConcluidos() {
+        const doneTasks = appState.kanban.filter(t => t.status === 'done');
+        if (doneTasks.length === 0) { toast('Nenhuma tarefa conclu\u00edda para exportar', 'warning'); return; }
+
+        const data = doneTasks.map(t => ({
+            tarefa: t.text,
+            dataCriacao: t.dataCriacao || '',
+            dataInicio: t.dataInicio || '',
+            dataTermino: t.dataTermino || '',
+            ultimaAtualizacao: t.ultimaAtualizacao || '',
+            anotacoes: t.anotacoes ? (function(){try{return JSON.parse(t.anotacoes)}catch(e){return t.anotacoes}})() : ''
+        }));
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `concluidos_${new Date().toISOString().split('T')[0]}.json`;
+        a.click(); URL.revokeObjectURL(url);
+        toast(`Exportados ${data.length} registro(s) conclu\u00eddo(s)`);
+    }
+
+    function limparConcluidos() {
+        const count = appState.kanban.filter(t => t.status === 'done').length;
+        if (count === 0) { toast('Nenhuma tarefa conclu\u00edda para limpar', 'warning'); return; }
+        modalOpen('Limpar Conclu\u00eddos', `Deseja remover todas as ${count} tarefa(s) conclu\u00edda(s)?`, () => {
+            appState.kanban = appState.kanban.filter(t => t.status !== 'done');
+            dbSave();
+            kanbanRender();
+            toast(`${count} tarefa(s) conclu\u00edda(s) removida(s)`);
+        }, { btnText: 'Limpar', btnClass: 'btn btn-danger' });
     }
 
     // ============================================================
@@ -1097,9 +1267,8 @@
         appState.links[key].itens.push({ nome, url });
         dbSave();
         toggleInlineForm(key);
-        linksRenderFilters();  // renderiza filtros ANTES do grid
+        linksRenderFilters();
         linksRender();
-        // agora o querySelector tem o DOM atualizado
         const activeBtn = document.querySelector(`.ftab[data-f="${linkFilter}"]`)
                        || document.querySelector('.ftab[data-f="all"]');
         if (activeBtn) linkSetFilter(linkFilter, activeBtn);
@@ -1108,7 +1277,7 @@
 
     function linkRemove(key, idx) {
         const item = appState.links[key].itens[idx];
-        modalOpen('Remover Link', `Deseja remover "${item ? item.nome : ''}"?`, () => {
+        modalOpen('Remover Link', `Deseja remover "${item ? escHtml(item.nome) : ''}"?`, () => {
             appState.links[key].itens.splice(idx, 1);
             dbSave();
             linksRender();
@@ -1183,7 +1352,7 @@
             pomoReset();
             renderAll();
             toast('Dados resetados para o padrão');
-        });
+        }, { btnText: 'Resetar', btnClass: 'btn btn-danger' });
     }
 
     // ============================================================
@@ -1203,14 +1372,24 @@
     }
 
     let audioCtx = null;
-    function playBeep(freq = 660, dur = 200, times = 2) {
+
+    function initAudio() {
         try {
-            if (!audioCtx) {
+            if (!audioCtx || audioCtx.state === 'closed') {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
+        } catch (e) {
+            console.warn('AudioContext indisponivel:', e.message);
+        }
+    }
+
+    function playBeep(freq = 660, dur = 200, times = 2) {
+        try {
+            initAudio();
+            if (!audioCtx) return;
             for (let i = 0; i < times; i++) {
                 setTimeout(() => {
                     const osc = audioCtx.createOscillator();
@@ -1223,7 +1402,7 @@
                 }, i * 280);
             }
         } catch (e) {
-            console.error('AudioContext falhou ou foi bloqueado:', e);
+            console.warn('Beep indisponivel:', e.message);
         }
     }
 
@@ -1250,47 +1429,40 @@
 
         document.getElementById('reuniaoData').value = new Date().toISOString().split('T')[0];
         lucide.createIcons();
+
+        // Inicializa AudioContext no primeiro clique do usuário
+        document.addEventListener('click', () => initAudio(), { once: true });
     }
 
     function abrirTutorialHome() {
         const urlAtual = window.location.href;
-        
+
         const passoPasso = `
             <div class="text-left space-y-3 mt-3">
-                <p class="text-xs text-gray-600">Os navegadores modernos exigem que você configure a página inicial manualmente por segurança. Siga o passo a passo para o seu navegador:</p>
-                
+                <p class="text-xs text-gray-600">Os navegadores modernos exigem que voce configure a pagina inicial manualmente por seguranca. Siga o passo a passo para o seu navegador:</p>
+
                 <div class="border-t border-gray-100 pt-2">
-                    <strong class="text-xs text-inst-dark flex items-center gap-1">🌐 No Google Chrome / Edge:</strong>
+                    <strong class="text-xs text-inst-dark flex items-center gap-1">No Google Chrome / Edge:</strong>
                     <ol class="list-decimal list-inside text-[11px] text-gray-500 mt-1 space-y-1">
-                        <li>Copie o endereço desta página.</li>
-                        <li>Clique nos <strong>três pontos (Menu)</strong> no canto superior direito e vá em <strong>Configurações</strong>.</li>
-                        <li>No menu esquerdo, clique em <strong>Inicialização</strong> (ou <em>Aparência</em>).</li>
-                        <li>Selecione "Abrir uma página específica" ou ative o "Botão Página Inicial" e cole o endereço desta página ali.</li>
+                        <li>Copie o endereco desta pagina.</li>
+                        <li>Clique nos <strong>tres pontos (Menu)</strong> no canto superior direito e va em <strong>Configuracoes</strong>.</li>
+                        <li>No menu esquerdo, clique em <strong>Inicializacao</strong> (ou <em>Aparencia</em>).</li>
+                        <li>Selecione "Abrir uma pagina especifica" ou ative o "Botao Pagina Inicial" e cole o endereco desta pagina ali.</li>
                     </ol>
                 </div>
-                
+
                 <div class="border-t border-gray-100 pt-2">
-                    <strong class="text-xs text-inst-dark flex items-center gap-1">🖱️ Atalho Rápido (Chrome/Firefox):</strong>
+                    <strong class="text-xs text-inst-dark flex items-center gap-1">Atalho Rapido (Chrome/Firefox):</strong>
                     <p class="text-[11px] text-gray-500 mt-1">
-                        Clique e segure o <strong>ícone de cadeado</strong> (ou a bolinha de informação) que fica do lado esquerdo do endereço dessa página na barra do navegador, e arraste-o direto para o desenho da <strong>Casinha (Home)</strong> no seu navegador.
+                        Clique e segure o <strong>icone de cadeado</strong> (ou a bolinha de informacao) que fica do lado esquerdo do endereco dessa pagina na barra do navegador, e arraste-o direto para o desenho da <strong>Casinha (Home)</strong> no seu navegador.
                     </p>
                 </div>
             </div>
         `;
 
-        // Abre usando o modal padrão do seu dashboard
-        modalOpen('Definir Página Inicial', passoPasso, () => {});
-        setTimeout(() => {
-            const btn = document.getElementById('modalConfirmBtn');
-            btn.textContent = 'Entendi';
-            btn.className = 'btn btn-primary';
-            // Substituir o listener para apenas fechar
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
-            newBtn.addEventListener('click', modalClose);
-        }, 50);
+        modalOpen('Definir Pagina Inicial', passoPasso, null, { btnText: 'Entendi', btnClass: 'btn btn-primary' });
     }
-        
+
     init();
     </script>
 </body>
