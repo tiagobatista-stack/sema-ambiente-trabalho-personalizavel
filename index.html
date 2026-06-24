@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEMA-MT · Dashboard de Produtividade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        inst: { dark: '#1E2B6E', mid: '#253578', light: '#3b82f6', pale: '#eef2ff', border: '#c7d2fe' }
+                    },
+                    fontFamily: { condensed: ['"Roboto Condensed"', 'Calibri', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Roboto Condensed', Calibri, sans-serif; background: #f0f2f7; color: #1e2a5e; }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 3px; }
+
+        /* ===== ANIMAÇÕES ===== */
+        @keyframes fadeInUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+        .anim { animation: fadeInUp 0.45s ease forwards; opacity: 0; }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: #fff; border: 1px solid #e2e5ef; border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(30,42,94,0.06); transition: box-shadow 0.25s;
+        }
+        .card:hover { box-shadow: 0 4px 16px rgba(30,42,94,0.1); }
+
+        .card-header {
+            padding: 12px 16px; border-bottom: 3px solid #1e2a5e;
+            display: flex; align-items: center; gap: 10px;
+            background: linear-gradient(135deg, #f5f7ff 0%, #fff 100%);
+        }
+
+        /* ===== ÍCONES CIRCULARES ===== */
+        .ico { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #fff; }
+        .ico svg { width: 18px; height: 18px; }
+        .ico.darkblue { background: #1e2a5e; }
+        .ico.blue { background: #2563eb; }
+        .ico.purple { background: #7c3aed; }
+        .ico.cyan { background: #0891b2; }
+        .ico.red { background: #dc2626; }
+        .ico.teal { background: #0d9488; }
+        .ico.amber { background: #d97706; }
+        .ico.green { background: #16a34a; }
+
+        /* ===== LINKS ===== */
+        .svc-link {
+            display: flex; align-items: center; gap: 8px; padding: 9px 16px;
+            text-decoration: none; color: #1e2a5e; font-size: 0.82rem;
+            border-bottom: 1px solid #f3f4f8; transition: all 0.2s;
+        }
+        .svc-link:last-child { border-bottom: none; }
+        .svc-link:hover { background: #eef2ff; padding-left: 22px; color: #253578; }
+        .svc-link:hover .chev { opacity: 1; transform: translateX(0); }
+        .chev { opacity: 0; transform: translateX(-4px); transition: all 0.2s; margin-left: auto; flex-shrink: 0; color: #3b82f6; }
+        .dot { width: 5px; height: 5px; border-radius: 50%; background: #1e2a5e; flex-shrink: 0; opacity: 0.3; transition: opacity 0.2s; }
+        .svc-link:hover .dot { opacity: 0.8; }
+
+        /* ===== INPUTS ===== */
+        .inp {
+            border: 1.5px solid #d1d5e8; border-radius: 6px; padding: 8px 12px;
+            font-size: 0.85rem; outline: none; transition: border-color 0.2s;
+            font-family: 'Roboto Condensed', Calibri, sans-serif; color: #1e2a5e; background: #fff;
+        }
+        .inp:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.12); }
+
+        /* ===== BOTÕES ===== */
+        .btn {
+            padding: 7px 16px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; border: none; display: inline-flex;
+            align-items: center; gap: 6px; font-family: 'Roboto Condensed', Calibri, sans-serif;
+            text-transform: uppercase; letter-spacing: 0.03em;
+        }
+        .btn-primary { background: #1e2a5e; color: #fff; }
+        .btn-primary:hover { background: #253578; }
+        .btn-secondary { background: #f0f2f7; color: #1e2a5e; border: 1.5px solid #d1d5e8; }
+        .btn-secondary:hover { border-color: #a5b4fc; background: #eef2ff; }
+        .btn-danger { background: #fef2f2; color: #dc2626; border: 1.5px solid #fecaca; }
+        .btn-danger:hover { background: #fee2e2; }
+        .btn-sm { padding: 4px 10px; font-size: 0.72rem; }
+
+        /* ===== POMODORO ===== */
+        .pomo-ring { width: 170px; height: 170px; position: relative; }
+        .pomo-ring svg { transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: #eef2ff; stroke-width: 7; }
+        .ring-fg { fill: none; stroke: #1e2a5e; stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.3s; }
+        .ring-fg.break-c { stroke: #d97706; }
+        .pomo-time { font-size: 2.8rem; font-weight: 700; line-height: 1; color: #1e2a5e; font-variant-numeric: tabular-nums; }
+        .pomo-status { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 10px; border-radius: 4px; }
+        .pomo-status.stopped { background: #f0f2f7; color: #999; }
+        .pomo-status.running { background: #eef2ff; color: #1e2a5e; }
+        .pomo-status.paused { background: #fffbeb; color: #d97706; }
+        .pomo-status.done { background: #f0fdf4; color: #16a34a; }
+
+        /* ===== KANBAN ===== */
+        .kanban-col-wrapper { background: #f4f6fa; border-radius: 12px; padding: 12px; min-height: 200px; }
+        .kanban-col-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; margin-bottom: 12px; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .kanban-card {
+            background: #fff; border: 1px solid #e2e5ef; border-radius: 8px; padding: 14px 12px;
+            font-size: 0.85rem; cursor: grab; transition: all 0.2s; position: relative;
+            box-shadow: 0 2px 4px rgba(30,42,94,0.02); display: flex; align-items: center; justify-content: space-between;
+        }
+        .kanban-card::before {
+            content: ''; position: absolute; left: 0; top: 15%; bottom: 15%; width: 4px; border-radius: 0 4px 4px 0;
+        }
+        .kanban-card[data-status="todo"]::before { background: #d97706; }
+        .kanban-card[data-status="doing"]::before { background: #2563eb; }
+        .kanban-card[data-status="done"]::before { background: #16a34a; }
+
+        .kanban-col-wrapper.drag-over { background: #e8edf8; outline: 2px dashed #3b82f6; outline-offset: -2px; }
+        .kanban-scroll { max-height: 420px; overflow-y: auto; }
+        .kanban-scroll::-webkit-scrollbar { width: 5px; }
+        .kanban-scroll::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 3px; }
+        .kanban-scroll::-webkit-scrollbar-track { background: transparent; }
+        .kanban-note-btn { padding: 3px; border: none; background: transparent; cursor: pointer; border-radius: 4px; transition: all 0.2s; color: #9ca3af; display: inline-flex; align-items: center; justify-content: center; }
+        .kanban-note-btn:hover { color: #1e2a5e; background: #eef2ff; }
+        .kanban-note-btn.has-notes { color: #2563eb; }
+
+        /* ===== FILTROS ===== */
+        .ftab {
+            padding: 5px 14px; font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.04em; border: 1.5px solid #d1d5e8; border-radius: 5px;
+            background: #fff; color: #666; cursor: pointer; transition: all 0.2s;
+            font-family: 'Roboto Condensed', Calibri, sans-serif;
+        }
+        .ftab:hover { border-color: #a5b4fc; color: #1e2a5e; }
+        .ftab.active { background: #1e2a5e; border-color: #1e2a5e; color: #fff; }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(30,42,94,0.45); z-index: 300;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.25s;
+            backdrop-filter: blur(3px);
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: #fff; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%;
+            box-shadow: 0 20px 60px rgba(30,42,94,0.25); transform: scale(0.92); transition: transform 0.25s;
+        }
+        .modal-overlay.open .modal-box { transform: scale(1); }
+
+        /* ===== TOAST ===== */
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 400; display: flex; flex-direction: column; gap: 8px; }
+        .toast-item {
+            padding: 12px 20px; border-radius: 8px; font-size: 0.82rem; font-weight: 500;
+            color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,0.15); transform: translateX(120%);
+            transition: transform 0.35s cubic-bezier(0.16,1,0.3,1); max-width: 340px;
+        }
+        .toast-item.show { transform: translateX(0); }
+        .toast-item.success { background: #1e2a5e; }
+        .toast-item.error { background: #dc2626; }
+        .toast-item.warning { background: #d97706; }
+        .clock-display { font-family: 'Roboto Condensed', sans-serif; font-weight: 700; font-size: 1.6rem; color: #ffffff; letter-spacing: 0.02em; }
+
+        /* ===== INLINE FORM ===== */
+        .inline-form { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+        .inline-form.open { max-height: 200px; }
+        .link-body { max-height: 360px; overflow-y: auto; }
+        .link-body.collapsed { display: none; }
+        .link-chevron { transition: transform 0.25s; }
+        .link-chevron.collapsed { transform: rotate(-90deg); }
+
+        /* ===== REUNIÃO DESTAQUE ===== */
+        .reuniao-today { border-left: 3px solid #dc2626; background: #fef2f2; }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 500;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .sidebar-overlay.open { opacity: 1; pointer-events: all; }
+
+        .sidebar {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 220px;
+            background: #1E2B6E; z-index: 550; overflow-y: auto;
+            transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+            box-shadow: 4px 0 20px rgba(0,0,0,0.2);
+        }
+        .sidebar.open { transform: translateX(0); }
+
+        .sidebar-header {
+            padding: 16px; display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar-header h3 { font-size: 0.85rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
+        .sidebar-close {
+            background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer;
+            padding: 4px; border-radius: 4px; transition: color 0.2s;
+        }
+        .sidebar-close:hover { color: #fff; }
+
+        .sidebar-nav { padding: 8px 0; }
+        .sidebar-nav a {
+            display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+            color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.82rem;
+            font-weight: 500; transition: all 0.2s; border-left: 3px solid transparent;
+        }
+        .sidebar-nav a:hover { background: rgba(255,255,255,0.08); color: #fff; border-left-color: #3b82f6; }
+        .sidebar-nav a i { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; }
+        .sidebar-nav a:hover i { opacity: 1; }
+        .sidebar-nav .nav-label {
+            font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.08em; color: rgba(255,255,255,0.3); padding: 12px 16px 4px;
+        }
+
+        /* ajuste do main quando sidebar aberta em desktop */
+        @media (min-width: 1024px) {
+            .sidebar.open ~ .main-wrapper { margin-left: 220px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div style="background:#1E2B6E; height:4px; width:100%;"></div>
+
+    <header style="background:#1E2B6E; border-bottom:3px solid #1a2356; box-shadow:0 2px 8px rgba(30,42,94,0.08);" class="sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 md:px-6">
+            <div class="flex items-center justify-between py-2">
+                <div class="flex items-center gap-4">
+                    <img src="https://www.sema.mt.gov.br/site/images/images_desenvolvimento/logo_menor_400.jpeg" alt="Logo SEMA" class="h-16 w-auto object-contain" />
+                    <div>
+                        <h1 class="font-condensed text-xl md:text-2xl font-bold text-white uppercase tracking-wide leading-tight">SEMA-MT
+                        <span class="text-[10px] bg-white/20 text-white px-1.5 py-0.5 rounded font-bold tracking-normal">v1.1.0</span>
+                        </h1>
+                        <p class="text-xs text-blue-100 font-light leading-tight mt-0.5 opacity-90">Secretaria de Estado de Meio Ambiente</p>
+
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="btn btn-secondary btn-sm flex items-center gap-1" onclick="toggleSidebar()" style="background:transparent;border-color:rgba(255,255,255,0.2);color:#fff;" title="Menu">
+                        <i data-lucide="menu" class="w-4 h-4"></i>
+                    </button>
+                    <form action="https://www.google.com/search" method="GET" target="_blank" class="relative hidden md:block">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"></i>
+                        <input type="text" name="q" placeholder="Buscar no Google..." class="inp" style="padding-left:34px; width:240px; font-size:0.8rem;">
+                    </form>
+                    <button class="btn btn-secondary btn-sm flex items-center gap-1" onclick="abrirTutorialHome()">
+                        <i data-lucide="home" class="w-3.5 h-3.5 text-blue-600"></i> Definir como Página Inicial
+                    </button>
+                    <div class="text-right">
+                        <div id="clock" class="clock-display tabular-nums">--:--:--</div>
+                        <div id="date" class="text-[11px] text-blue-100 opacity-80 mt-0.5">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- SIDEBAR OVERLAY -->
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h3>Navegação</h3>
+            <button class="sidebar-close" onclick="toggleSidebar()"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-label">Ferramentas</div>
+            <a href="#" onclick="scrollToSection('pomodoro');toggleSidebar()"><i data-lucide="timer"></i> Pomodoro</a>
+            <a href="#" onclick="scrollToSection('ponto');toggleSidebar()"><i data-lucide="calculator"></i> Jornada</a>
+            <a href="#" onclick="scrollToSection('reunioes');toggleSidebar()"><i data-lucide="users"></i> Reuniões</a>
+            <div class="nav-label">Gestão</div>
+            <a href="#" onclick="scrollToSection('kanban');toggleSidebar()"><i data-lucide="layout-grid"></i> Kanban</a>
+            <a href="#" onclick="scrollToSection('links');toggleSidebar()"><i data-lucide="globe"></i> Links</a>
+            <div class="nav-label">Dados</div>
+            <a href="#" onclick="scrollToSection('dados');toggleSidebar()"><i data-lucide="database"></i> Gerenciamento</a>
+        </nav>
+    </aside>
+
+    <!-- WRAPPER DO CONTEÚDO -->
+    <div class="main-wrapper">
+    <main class="max-w-7xl mx-auto px-4 md:px-6 py-5 space-y-6">
+
+        <!-- PRIMEIRA LINHA: MINI COMPONENTES (POMODORO, PONTO, REUNIÕES) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- POMODORO-->
+            <section id="pomodoro" class="card anim" style="animation-delay:0s;">
+                <div class="card-header">
+                    <div class="ico blue"><i data-lucide="timer" class="w-[18px] h-[18px]"></i></div>
+                    <div>
+                        <h2 class="font-condensed text-sm font-bold uppercase tracking-wide text-inst-dark">Pomodoro</h2>
+                        <span class="text-[10px] text-gray-400">Ciclos adaptados com anel visual</span>
+                    </div>
+                </div>
+                <div class="p-4 flex flex-col items-center">
+                    <div class="pomo-ring flex items-center justify-center mb-3">
+                        <svg width="170" height="170">
+                            <circle cx="85" cy="85" r="76" class="ring-bg"></circle>
+                            <circle cx="85" cy="85" r="76" class="ring-fg" id="pomoRing"></circle>
+                        </svg>
+                        <div class="absolute flex flex-col items-center justify-center">
+                            <div class="pomo-time" id="pomoDisplay">25:00</div>
+                            <div class="mt-1">
+                                <span id="pomoStatusLabel" class="pomo-status stopped">Parado</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 mb-3">
+                        <label for="pomoInput" class="text-xs font-semibold text-gray-500">Minutos:</label>
+                        <input type="number" id="pomoInput" class="inp text-center py-1 px-2 w-16" value="25" min="1" max="60">
+                    </div>
+                    <div class="flex flex-wrap justify-center gap-2 mb-4">
+                        <button class="btn btn-secondary btn-sm pomo-preset" data-min="15">15min</button>
+                        <button class="btn btn-secondary btn-sm pomo-preset" data-min="25">25min</button>
+                        <button class="btn btn-success btn-sm pomo-preset text-white" data-min="5" style="background:#10b981; border-color:#10b981;">5min Pausa</button>
+                    </div>
+                    <div class="flex justify-center gap-2 w-full">
+                        <button id="pomoStartBtn" class="btn btn-primary flex-1 justify-center" onclick="pomoStart()"><i data-lucide="play" class="w-3.5 h-3.5"></i> Iniciar</button>
+                        <button id="pomoPauseBtn" class="btn btn-secondary flex-1 justify-center" onclick="pomoPause()" style="display:none;"><i data-lucide="pause" class="w-3.5 h-3.5"></i> Pausar</button>
+                        <button id="pomoResetBtn" class="btn btn-secondary justify-center" onclick="pomoReset()"><i data-lucide="refresh-ccw" class="w-3.5 h-3.5"></i></button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PONTO / CALCULADORA DE JORNADA FLEXÍVEL (DIRETA OU COM INTERVALO) -->
+            <section id="ponto" class="card anim" style="animation-delay:0.1s;">
+                <div class="card-header justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-3">
+                        <div class="ico amber"><i data-lucide="calculator" class="w-[18px] h-[18px]"></i></div>
+                        <div>
+                            <h2 class="font-condensed text-sm font-bold uppercase tracking-wide text-inst-dark">Calculadora de Saída</h2>
+                            <span class="text-[10px] text-gray-400">Monitoramento dinâmico de jornada</span>
+                        </div>
+                    </div>
+                    <!-- Seletor de Carga Horária -->
+                    <div class="flex gap-1 bg-gray-100 p-0.5 rounded-md border border-gray-200">
+                        <button id="btn_jornada8" class="px-2 py-0.5 text-[10px] font-bold uppercase rounded text-white bg-inst-dark" onclick="setJornada(480, this)">8h</button>
+                        <button id="btn_jornada6" class="px-2 py-0.5 text-[10px] font-bold uppercase rounded text-gray-500 hover:text-inst-dark" onclick="setJornada(360, this)">6h</button>
+                    </div>
+                </div>
+                <div class="p-4 space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Entrada 1 (Início)</label>
+                            <input type="time" id="ponto_entrada1" class="inp w-full mt-1" value="11:00" oninput="calcularSaidaAutomatica()">
+                        </div>
+                        
+                        <div id="container_saida1">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Saída 1 (Almoço)</label>
+                            <input type="time" id="ponto_saida1" class="inp w-full mt-1" value="11:00" oninput="calcularSaidaAutomatica()">
+                        </div>
+                        <div id="container_entrada2">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Entrada 2 (Retorno)</label>
+                            <input type="time" id="ponto_entrada2" class="inp w-full mt-1" value="13:00" oninput="calcularSaidaAutomatica()">
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Saída 2 (Fim do Turno)</label>
+                            <input type="time" id="ponto_saida2" class="inp w-full mt-1 font-bold text-blue-700 bg-blue-50 border-blue-300" readonly>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary w-full" onclick="pontoSalvar()">
+                        <i data-lucide="save" class="w-3.5 h-3.5"></i> Salvar Horários e Monitorar
+                    </button>
+                    <div id="pontoInfo" class="text-[11px] text-gray-400 text-center">Informe o horário de entrada para calcular o fim do expediente.</div>
+                </div>
+            </section>
+
+            <!-- REUNIÃO-->
+            <section id="reunioes" class="card anim" style="animation-delay:0.15s;">
+                <div class="card-header">
+                    <div class="ico purple"><i data-lucide="users" class="w-[18px] h-[18px]"></i></div>
+                    <div><h2 class="font-condensed text-sm font-bold uppercase tracking-wide text-inst-dark">Reuniões/Eventos</h2></div>
+                </div>
+                <div class="p-4">
+                    <div class="space-y-2 mb-3">
+                        <input type="text" id="reuniaoTitulo" class="inp w-full" placeholder="Assunto da reunião">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="date" id="reuniaoData" class="inp w-full">
+                            <input type="time" id="reuniaoHora" class="inp w-full">
+                        </div>
+                        <button class="btn btn-primary w-full" onclick="reuniaoAdd()"><i data-lucide="plus" class="w-3.5 h-3.5"></i> Agendar</button>
+                    </div>
+                    <div id="reunioesList" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SEÇÃO INTEIRA 1: KANBAN (QUADRO DE TAREFAS) -->
+        <!-- ============================================================ -->
+        <section id="kanban" class="card anim w-full" style="animation-delay: 0.2s;">
+            <div class="card-header justify-between flex-wrap gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="ico darkblue"><i data-lucide="layout-grid"></i></div>
+                    <div>
+                        <h2 class="font-condensed text-sm font-bold uppercase tracking-wide text-inst-dark">Quadro de Tarefas</h2>
+                        <span class="text-[10px] text-gray-400">Máx. 3 tarefas em "Em Andamento"</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="kanbanInput" class="inp py-1.5 text-xs w-48" placeholder="Digite uma tarefa..." onkeydown="if(event.key==='Enter')kanbanAdd()">
+                    <select id="kanbanTipo" class="inp py-1.5 text-xs w-28">
+                        <option value="outros">Outros</option>
+                        <option value="licenciamento">Licenciamento</option>
+                        <option value="fiscalizacao">Fiscalização</option>
+                        <option value="ouvidoria">Ouvidoria</option>
+                    </select>
+                    <button class="btn btn-primary p-2" onclick="kanbanAdd()" style="border-radius:6px;"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                </div>
+            </div>
+
+            <div class="p-4 space-y-5">
+                <!-- Métricas do Kanban -->
+                <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="card p-4 flex flex-col items-center justify-center text-center bg-gray-50/50">
+                        <span id="metricTodo" class="text-2xl font-bold text-amber-600 mb-1">0</span>
+                        <div class="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                            <i data-lucide="file-text" class="w-3.5 h-3.5 text-amber-500"></i> A Fazer
+                        </div>
+                    </div>
+                    <div class="card p-4 flex flex-col items-center justify-center text-center bg-gray-50/50">
+                        <span id="metricDoing" class="text-2xl font-bold text-blue-600 mb-1">0/3</span>
+                        <div class="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                            <i data-lucide="activity" class="w-3.5 h-3.5 text-blue-500"></i> Em Andamento
+                        </div>
+                    </div>
+                    <div class="card p-4 flex flex-col items-center justify-center text-center bg-gray-50/50">
+                        <span id="metricDone" class="text-2xl font-bold text-green-600 mb-1">0</span>
+                        <div class="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                            <i data-lucide="check-circle" class="w-3.5 h-3.5 text-green-500"></i> Concluído
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colunas estruturadas lado a lado ocupando 100% da largura -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="kanban-col-wrapper">
+                        <div class="kanban-col-header text-amber-600 border-b-2 border-amber-200">
+                            <span class="flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> A Fazer</span>
+                            <span id="countTodo" class="text-[10px] bg-amber-100 px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="kanbanTodo" class="space-y-2 min-h-[180px]" data-status="todo" ondragover="kanbanDragOver(event)" ondrop="kanbanDrop(event)" ondragleave="kanbanDragLeave(event)"></div>
+                    </div>
+
+                    <div class="kanban-col-wrapper">
+                        <div class="kanban-col-header text-blue-600 border-b-2 border-blue-200">
+                            <span class="flex items-center gap-1.5"><i data-lucide="activity" class="w-3.5 h-3.5"></i> Em Andamento</span>
+                            <span id="countDoing" class="text-[10px] bg-blue-100 px-2 py-0.5 rounded-full">0/3</span>
+                        </div>
+                        <div id="kanbanDoing" class="space-y-2 min-h-[180px]" data-status="doing" ondragover="kanbanDragOver(event)" ondrop="kanbanDrop(event)" ondragleave="kanbanDragLeave(event)"></div>
+                    </div>
+
+                    <div class="kanban-col-wrapper">
+                        <div class="kanban-col-header text-green-600 border-b-2 border-green-200">
+                            <span class="flex items-center gap-1.5"><i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Concluído</span>
+                            <div class="flex items-center gap-1">
+                                <span id="countDone" class="text-[10px] bg-green-100 px-2 py-0.5 rounded-full">0</span>
+                                <button class="btn btn-sm text-green-600 hover:bg-green-100" style="padding:2px 6px;font-size:10px;border:none;background:transparent;" onclick="exportarConcluidos()" title="Exportar Concluídos"><i data-lucide="download" class="w-3 h-3"></i></button>
+                                <button class="btn btn-sm text-red-500 hover:bg-red-50" style="padding:2px 6px;font-size:10px;border:none;background:transparent;" onclick="limparConcluidos()" title="Limpar Concluídos"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                            </div>
+                        </div>
+                        <div id="kanbanDone" class="space-y-2 min-h-[180px] kanban-scroll" data-status="done" ondragover="kanbanDragOver(event)" ondrop="kanbanDrop(event)" ondragleave="kanbanDragLeave(event)"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SEÇÃO INTEIRA 2: DIRETÓRIO DE LINKS -->
+        <!-- ============================================================ -->
+        <section id="links" class="card anim w-full" style="animation-delay:0.25s;">
+            <div class="card-header">
+                <div class="ico green"><i data-lucide="globe" class="w-[18px] h-[18px]"></i></div>
+                <div><h2 class="font-condensed text-sm font-bold uppercase tracking-wide text-inst-dark">Diretório de Links</h2></div>
+            </div>
+            <div class="p-4">
+                <div class="flex flex-wrap gap-2 mb-4" id="linkFilters"></div>
+                <div id="linksGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- SEÇÃO INTEIRA 3: GERENCIAMENTO DE DADOS -->
+        <!-- ============================================================ -->
+        <section id="dados" class="card anim w-full" style="animation-delay:0.3s;">
+            <div class="card-header">
+                <div class="ico teal"><i data-lucide="database" class="w-[18px] h-[18px]"></i></div>
+                <div><h2 class="font-condensed text-sm font-bold uppercase tracking-wide text-inst-dark">Gerenciamento de Dados</h2></div>
+            </div>
+            <div class="p-4 flex flex-wrap gap-3">
+                <button class="btn btn-primary" onclick="dataExport()"><i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar Dados (JSON)</button>
+                <label class="btn btn-secondary cursor-pointer">
+                    <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importar Dados (JSON)
+                    <input type="file" accept=".json" class="hidden" onchange="dataImport(event)">
+                </label>
+                <button class="btn btn-danger" onclick="dataReset()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Resetar Tudo</button>
+            </div>
+        </section>
+
+    </main>
+    </div><!-- .main-wrapper -->
+
+    <footer style="background:#1E2B6E;" class="mt-6">
+        <div class="max-w-7xl mx-auto px-4 md:px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-2">
+            <div class="text-xs text-white/70 font-normal">
+                Secretaria de Estado de Meio Ambiente · Mato Grosso · <span class="bg-blue-900/50 px-2 py-0.5 rounded text-white/90 text-[10px] font-bold">v1.1.0</span>
+            </div>
+            <span class="text-[13px] text-white/60">© 2026 SEMA-MT — Dashboard de Produtividade · Dev: <strong class="text-white font-bold">Tiago Alexandre Batista</strong></span>
+        </div>
+    </footer>
+
+    <!-- MODAL -->
+    <div id="modalOverlay" class="modal-overlay" onclick="if(event.target===this){modalCallback=null;modalClose();}">
+        <div class="modal-box">
+            <h3 id="modalTitle" class="font-condensed text-base font-bold text-inst-dark uppercase tracking-wide mb-2">Confirmar</h3>
+            <p id="modalMsg" class="text-sm text-gray-500 mb-5">Tem certeza?</p>
+            <div class="flex justify-end gap-2">
+                <button class="btn btn-secondary" onclick="modalClose()">Cancelar</button>
+                <button id="modalConfirmBtn" class="btn btn-danger">Remover</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script>
+    // ============================================================
+    // ESTADO PADRÃO E PERSISTÊNCIA
+    // ============================================================
+    const DB_KEY = 'sema_db_json_v2';
+    const CIRC = 2 * Math.PI * 76;
+
+    const DEFAULT_STATE = {
+        ponto: { entrada1: '07:00', saida1: '11:00', entrada2: '13:00', saida2: '17:00' },
+        reunioes: [],
+        kanban: [],
+        links: {
+            profissional: {
+                nome: 'Profissional', icon: 'darkblue',
+                itens: [
+                    { nome: 'SEMA-MT · Portal Institucional', url: 'https://www.sema.mt.gov.br/' },
+                    { nome: 'Portal SEMA', url: 'https://portal.sema.mt.gov.br/' },
+                    { nome: 'Termos de Referência', url: 'https://www.sema.mt.gov.br/site/index.php/termos-de-refer%C3%AAncia' },
+                    { nome: 'SEMA Virtual · Login', url: 'https://semavirtual.sema.mt.gov.br/acessoweb/login/LoginUsuario.jsp' },
+                    { nome: 'Sigadoc · Documentos', url: 'https://www.sigadoc.mt.gov.br/' },
+                    { nome: 'SIMCAR · Análise', url: 'https://sistema.sema.mt.gov.br/simcar/analise.app/autenticar' },
+                    { nome: 'Gmail · E-mail', url: 'https://mail.google.com/mail/u/2/#inbox' }
+                ]
+            },
+            fiscalizacao: {
+                nome: 'Fiscalização', icon: 'amber',
+                itens: [
+                    { nome: 'Rede Mais Brasil', url: 'https://plataforma.redemaisbr.com.br/#/' },
+                    { nome: 'Maxar · Satélite', url: 'https://account.maxar.com/admin' },
+                    { nome: 'Geoportal SEMA', url: 'https://geoportal.sema.mt.gov.br/#/' }
+                ]
+            },
+            pessoal: {
+                nome: 'Pessoal', icon: 'purple',
+                itens: [
+                    { nome: 'SIGPAS · Sistema de Pessoal', url: 'https://sigpas.seplag.mt.gov.br/sigpas/' },
+                    { nome: 'Portal Servidor', url: 'https://servicos.seplag.mt.gov.br/portalservidor/' }
+                ]
+            },
+            consultivo: {
+                nome: 'Consultivo', icon: 'cyan',
+                itens: [
+                    { nome: 'Gemini · Google AI', url: 'https://gemini.google.com/' },
+                    { nome: 'DeepSeek · Chat', url: 'https://chat.deepseek.com/' },
+                    { nome: 'Z.AI · Chat', url: 'https://chat.z.ai/' }
+                ]
+            },
+            noticias: {
+                nome: 'Notícias', icon: 'red',
+                itens: [
+                    { nome: 'Mídia News', url: 'https://www.midianews.com.br/' },
+                    { nome: 'Juína News', url: 'https://www.juinanews.com.br/' },
+                    { nome: 'Top News', url: 'http://www.topnews.com.br/' },
+                    { nome: 'Meio Bit · Tecnologia', url: 'https://meiobit.com/' },
+                    { nome: 'Phys.org · Ciência', url: 'https://phys.org/' },
+                    { nome: 'Inovação Tecnológica', url: 'https://www.inovacaotecnologica.com.br/' },
+                    { nome: 'YouTube', url: 'https://www.youtube.com/' },
+                    { nome: 'Google', url: 'https://www.google.com/' }
+                ]
+            },
+            compras: {
+                nome: 'Compras', icon: 'teal',
+                itens: [
+                    { nome: 'AliExpress', url: 'https://www.aliexpress.com/' },
+                    { nome: 'Mercado Livre', url: 'https://www.mercadolivre.com.br/' },
+                    { nome: 'Amazon Brasil', url: 'https://www.amazon.com.br/' }
+                ]
+            }
+        }
+    };
+
+    let appState = {};
+
+    function dbSave() {
+        appState.linkCollapsed = window.linkCollapsed || {};
+        try { localStorage.setItem(DB_KEY, JSON.stringify(appState)); } catch(e) { console.error('dbSave error', e); }
+    }
+
+    function dbLoad() {
+        try {
+            const raw = localStorage.getItem(DB_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                appState = {
+                    ponto: { ...DEFAULT_STATE.ponto, ...(parsed.ponto || {}) },
+                    reunioes: Array.isArray(parsed.reunioes) ? parsed.reunioes : [],
+                    kanban: Array.isArray(parsed.kanban) ? parsed.kanban : [],
+                    links: {}
+                };
+                for (const key in DEFAULT_STATE.links) {
+                    appState.links[key] = {
+                        ...DEFAULT_STATE.links[key],
+                        ...(parsed.links && parsed.links[key] || {}),
+                        itens: Array.isArray(parsed.links && parsed.links[key] && parsed.links[key].itens)
+                            ? parsed.links[key].itens
+                            : DEFAULT_STATE.links[key].itens
+                    };
+                }
+                window.linkCollapsed = parsed.linkCollapsed || {};
+            } else {
+                appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+                window.linkCollapsed = {};
+            }
+        } catch(e) {
+            console.error('dbLoad error', e);
+            appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            window.linkCollapsed = {};
+        }
+    }
+
+    // ============================================================
+    // TOAST
+    // ============================================================
+    function toast(msg, type = 'success') {
+        const c = document.getElementById('toastContainer');
+        const el = document.createElement('div');
+        el.className = `toast-item ${type}`;
+        el.textContent = msg;
+        c.appendChild(el);
+        requestAnimationFrame(() => el.classList.add('show'));
+        setTimeout(() => {
+            el.classList.remove('show');
+            setTimeout(() => el.remove(), 400);
+        }, 4000);
+    }
+
+    // ============================================================
+    // MODAL
+    // ============================================================
+    let modalCallback = null;
+
+    function modalOpen(title, msg, onConfirm, options = {}) {
+        const overlay = document.getElementById('modalOverlay');
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalMsg').innerHTML = msg;
+        overlay.classList.add('open');
+        modalCallback = onConfirm;
+
+        const btn = document.getElementById('modalConfirmBtn');
+        btn.textContent = options.btnText || 'Remover';
+        btn.className = options.btnClass || 'btn btn-danger';
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        newBtn.addEventListener('click', function handler() {
+            const cb = modalCallback;
+            modalCallback = null;
+            modalClose();
+            if (cb) cb();
+        });
+    }
+
+    function modalClose() {
+        document.getElementById('modalOverlay').classList.remove('open');
+    }
+
+    // ============================================================
+    // RELÓGIO
+    // ============================================================
+    function updateClock() {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2,'0');
+        const m = String(now.getMinutes()).padStart(2,'0');
+        const s = String(now.getSeconds()).padStart(2,'0');
+        document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+        const dias = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+        const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+        document.getElementById('date').textContent = `${dias[now.getDay()]}, ${now.getDate()} de ${meses[now.getMonth()]} de ${now.getFullYear()}`;
+    }
+
+    // ============================================================
+    // PONTO ELETRÔNICO & CALCULADORA DE JORNADA FLEXÍVEL
+    // ============================================================
+    let pontoAlerted = {};
+    let minutosJornadaTotal = 480;
+
+    function setJornada(minutos, botao) {
+        minutosJornadaTotal = minutos;
+
+        document.getElementById('btn_jornada8').className = "px-2 py-0.5 text-[10px] font-bold uppercase rounded " + (minutos === 480 ? "text-white bg-inst-dark" : "text-gray-500 hover:text-inst-dark");
+        document.getElementById('btn_jornada6').className = "px-2 py-0.5 text-[10px] font-bold uppercase rounded " + (minutos === 360 ? "text-white bg-inst-dark" : "text-gray-500 hover:text-inst-dark");
+
+        const displayStyle = minutos === 360 ? 'none' : '';
+        document.getElementById('container_saida1').style.display = displayStyle;
+        document.getElementById('container_entrada2').style.display = displayStyle;
+
+        appState.ponto.jornadaMinutos = minutos;
+
+        calcularSaidaAutomatica();
+    }
+
+    function pontoRender() {
+        document.getElementById('ponto_entrada1').value = appState.ponto.entrada1 || '';
+        document.getElementById('ponto_saida1').value = appState.ponto.saida1 || '';
+        document.getElementById('ponto_entrada2').value = appState.ponto.entrada2 || '';
+
+        if (appState.ponto.jornadaMinutos) {
+            const btnId = appState.ponto.jornadaMinutos === 360 ? 'btn_jornada6' : 'btn_jornada8';
+            setJornada(appState.ponto.jornadaMinutos, document.getElementById(btnId));
+        } else {
+            calcularSaidaAutomatica();
+        }
+    }
+
+    function calcularSaidaAutomatica() {
+        const e1 = document.getElementById('ponto_entrada1').value;
+        const campoSaida2 = document.getElementById('ponto_saida2');
+
+        if (!e1) {
+            campoSaida2.value = '';
+            return;
+        }
+
+        const minE1 = converteParaMinutos(e1);
+        let minSaida2Ideal = 0;
+
+        if (minutosJornadaTotal === 360) {
+            minSaida2Ideal = minE1 + 360;
+        } else {
+            const s1 = document.getElementById('ponto_saida1').value;
+            const e2 = document.getElementById('ponto_entrada2').value;
+
+            if (!s1 || !e2) {
+                campoSaida2.value = '';
+                return;
+            }
+
+            const minS1 = converteParaMinutos(s1);
+            const minE2 = converteParaMinutos(e2);
+            const primeiroTurnoTrabalhado = minS1 - minE1;
+
+            if (primeiroTurnoTrabalhado <= 0) {
+                campoSaida2.value = 'Erro';
+                return;
+            }
+
+            const restanteParaTrabalhar = 480 - primeiroTurnoTrabalhado;
+            minSaida2Ideal = minE2 + restanteParaTrabalhar;
+        }
+
+        const horasFinal = Math.floor(minSaida2Ideal / 60);
+        const minutosFinal = minSaida2Ideal % 60;
+
+        const resultadoFormatado = String(horasFinal).padStart(2, '0') + ':' + String(minutosFinal).padStart(2, '0');
+
+        campoSaida2.value = resultadoFormatado;
+        appState.ponto.saida2 = resultadoFormatado;
+    }
+
+    function converteParaMinutos(horarioStr) {
+        const [h, m] = horarioStr.split(':').map(Number);
+        return (h * 60) + m;
+    }
+
+    function pontoSalvar() {
+        calcularSaidaAutomatica();
+
+        appState.ponto.entrada1 = document.getElementById('ponto_entrada1').value;
+        appState.ponto.saida1 = document.getElementById('ponto_saida1').value;
+        appState.ponto.entrada2 = document.getElementById('ponto_entrada2').value;
+        appState.ponto.saida2 = document.getElementById('ponto_saida2').value;
+        appState.ponto.jornadaMinutos = minutosJornadaTotal;
+
+        pontoAlerted = {};
+        dbSave();
+
+        const labelJornada = minutosJornadaTotal === 360 ? '6h Diretas' : '8h Intercaladas';
+        toast(`Configurado jornada de ${labelJornada}. Saída prevista para às ${appState.ponto.saida2}`);
+    }
+
+    function pontoCheck() {
+        const now = new Date();
+        const hm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+        const e1 = appState.ponto.entrada1;
+        const s2 = appState.ponto.saida2;
+
+        if (e1) {
+            const minE1 = converteParaMinutos(e1);
+            const minutosMetaTurno = minutosJornadaTotal === 360 ? 180 : 240;
+            const minMetaManha = minE1 + minutosMetaTurno;
+
+            const horasM = Math.floor(minMetaManha / 60);
+            const minutosM = minMetaManha % 60;
+            const horarioMetaManha = String(horasM).padStart(2, '0') + ':' + String(minutosM).padStart(2, '0');
+
+            if (hm === horarioMetaManha && !pontoAlerted['metaManha']) {
+                pontoAlerted['metaManha'] = true;
+                playBeep(587.33, 250, 2);
+                const textoTurno = minutosJornadaTotal === 360 ? '3h' : '4h';
+                toast(`Alerta de Turno: Você completou ${textoTurno} de expediente!`, 'warning');
+            }
+        }
+
+        if (s2 && hm === s2 && !pontoAlerted['saida2']) {
+            pontoAlerted['saida2'] = true;
+            playBeep(880, 200, 3);
+            const labelCompleta = minutosJornadaTotal === 360 ? '6h' : '8h';
+            toast(`Jornada Cumprida! — Fim do Expediente: ${hm} (${labelCompleta} completadas).`, 'success');
+        }
+
+        if (e1 && hm === e1 && !pontoAlerted['entrada1']) {
+            pontoAlerted['entrada1'] = true;
+            toast(`Ponto Registrado — Entrada 1: ${hm}`, 'warning');
+        }
+    }
+
+    // ============================================================
+    // POMODORO
+    // ============================================================
+    let pomo = { running: false, timeLeft: 25*60, total: 25*60, interval: null };
+
+    function pomoRender() {
+        const m = Math.floor(pomo.timeLeft / 60);
+        const s = pomo.timeLeft % 60;
+        document.getElementById('pomoDisplay').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        const progress = pomo.total > 0 ? pomo.timeLeft / pomo.total : 1;
+        const offset = CIRC * (1 - progress);
+        const ring = document.getElementById('pomoRing');
+        if (ring) {
+            ring.style.strokeDasharray = CIRC;
+            ring.style.strokeDashoffset = offset;
+        }
+    }
+
+    function pomoUpdateStatus(status) {
+        const el = document.getElementById('pomoStatusLabel');
+        if (el) {
+            el.className = 'pomo-status ' + status;
+            const labels = { stopped: 'Parado', running: 'Rodando', paused: 'Pausado', done: 'Concluído' };
+            el.textContent = labels[status] || 'Parado';
+        }
+    }
+
+    function pomoAtualizarCorAnel() {
+        const ring = document.getElementById('pomoRing');
+        if (!ring) return;
+        const minutos = pomo.total / 60;
+        if (minutos <= 5) ring.classList.add('break-c');
+        else ring.classList.remove('break-c');
+    }
+
+    function pomoStart() {
+        if (pomo.running) return;
+        if (pomo.timeLeft === pomo.total || pomo.timeLeft <= 0) {
+            const val = parseInt(document.getElementById('pomoInput').value) || 25;
+            pomo.total = Math.max(1, Math.min(60, val)) * 60;
+            pomo.timeLeft = pomo.total;
+        }
+        pomoAtualizarCorAnel();
+        pomo.running = true;
+        pomoUpdateStatus('running');
+        document.getElementById('pomoStartBtn').style.display = 'none';
+        document.getElementById('pomoPauseBtn').style.display = '';
+        pomo.interval = setInterval(() => {
+            if (pomo.timeLeft <= 0) {
+                pomo.running = false;
+                clearInterval(pomo.interval);
+                pomoUpdateStatus('done');
+                document.getElementById('pomoStartBtn').style.display = '';
+                document.getElementById('pomoPauseBtn').style.display = 'none';
+                document.getElementById('pomoStartBtn').innerHTML = '<i data-lucide="play" class="w-3.5 h-3.5"></i> Iniciar';
+                lucide.createIcons();
+                playBeep(880, 200, 3);
+                toast('Pomodoro concluído!', 'success');
+                document.title = 'SEMA-MT · Dashboard de Produtividade';
+                return;
+            }
+            pomo.timeLeft--;
+            pomoRender();
+            const mm = Math.floor(pomo.timeLeft/60);
+            const ss = pomo.timeLeft%60;
+            document.title = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')} — SEMA-MT`;
+        }, 1000);
+        pomoRender();
+    }
+
+    function pomoPause() {
+        pomo.running = false;
+        clearInterval(pomo.interval);
+        pomoUpdateStatus('paused');
+        document.getElementById('pomoStartBtn').style.display = '';
+        document.getElementById('pomoPauseBtn').style.display = 'none';
+        document.getElementById('pomoStartBtn').innerHTML = '<i data-lucide="play" class="w-3.5 h-3.5"></i> Retomar';
+        lucide.createIcons();
+        document.title = 'SEMA-MT · Dashboard de Produtividade';
+    }
+
+    function pomoReset() {
+        pomo.running = false;
+        clearInterval(pomo.interval);
+        const val = parseInt(document.getElementById('pomoInput').value) || 25;
+        pomo.total = Math.max(1, Math.min(60, val)) * 60;
+        pomo.timeLeft = pomo.total;
+        pomoUpdateStatus('stopped');
+        pomoAtualizarCorAnel();
+
+        document.getElementById('pomoStartBtn').style.display = '';
+        document.getElementById('pomoPauseBtn').style.display = 'none';
+        document.getElementById('pomoStartBtn').innerHTML = '<i data-lucide="play" class="w-3.5 h-3.5"></i> Iniciar';
+        lucide.createIcons();
+        pomoRender();
+        document.title = 'SEMA-MT · Dashboard de Produtividade';
+    }
+
+    document.querySelectorAll('.pomo-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const min = parseInt(btn.dataset.min);
+            document.getElementById('pomoInput').value = min;
+            pomoReset();
+        });
+    });
+
+    document.getElementById('pomoInput').addEventListener('change', () => {
+        if (!pomo.running) pomoReset();
+    });
+
+    // ============================================================
+    // REUNIÕES
+    // ============================================================
+    function reuniaoRender() {
+        const list = document.getElementById('reunioesList');
+        const today = new Date().toISOString().split('T')[0];
+        const sorted = [...appState.reunioes].sort((a,b) => (a.data+a.hora).localeCompare(b.data+b.hora));
+        if (sorted.length === 0) {
+            list.innerHTML = '<p class="text-xs text-gray-400 text-center py-3">Nenhuma reunião agendada</p>';
+            return;
+        }
+        list.innerHTML = sorted.map(r => {
+            const isToday = r.data === today;
+            return `<div class="flex items-center gap-2 p-2.5 rounded-lg border ${isToday ? 'reuniao-today border-red-200' : 'border-gray-200'} text-xs">
+                <div class="flex-1 min-w-0">
+                    <div class="font-bold text-inst-dark truncate">${escHtml(r.titulo)}</div>
+                    <div class="text-gray-400 mt-0.5">${formatDate(r.data)} às ${r.hora}</div>
+                </div>
+                <button class="btn btn-sm btn-danger flex-shrink-0" onclick="reuniaoRemove(${r.id})"><i data-lucide="x" class="w-3 h-3"></i></button>
+            </div>`;
+        }).join('');
+        lucide.createIcons();
+    }
+
+    function reuniaoAdd() {
+        const titulo = document.getElementById('reuniaoTitulo').value.trim();
+        const data = document.getElementById('reuniaoData').value;
+        const hora = document.getElementById('reuniaoHora').value;
+        if (!titulo || !data || !hora) { toast('Preencha todos os campos', 'error'); return; }
+        appState.reunioes.push({ id: Date.now(), titulo, data, hora });
+        dbSave();
+        document.getElementById('reuniaoTitulo').value = '';
+        document.getElementById('reuniaoData').value = '';
+        document.getElementById('reuniaoHora').value = '';
+        reuniaoRender();
+        toast('Reunião agendada com sucesso');
+    }
+
+    function reuniaoRemove(id) {
+        const item = appState.reunioes.find(r => r.id === id);
+        modalOpen('Remover Reunião', `Deseja realmente remover "${item ? escHtml(item.titulo) : ''}"?`, () => {
+            appState.reunioes = appState.reunioes.filter(r => r.id !== id);
+            dbSave();
+            reuniaoRender();
+            toast('Reunião removida');
+        });
+    }
+
+    // ============================================================
+    // KANBAN
+    // ============================================================
+    let dragId = null;
+
+    function kanbanRender() {
+        const statuses = ['todo', 'doing', 'done'];
+
+        const cTodo = appState.kanban.filter(t => t.status === 'todo').length;
+        const cDoing = appState.kanban.filter(t => t.status === 'doing').length;
+        const cDone = appState.kanban.filter(t => t.status === 'done').length;
+
+        const todoEl = document.getElementById('kanbanTodo');
+        if (todoEl) todoEl.classList.toggle('kanban-scroll', cTodo >= 6);
+
+        statuses.forEach(status => {
+            const col = document.getElementById('kanban' + status.charAt(0).toUpperCase() + status.slice(1));
+            if (!col) return;
+
+            const items = appState.kanban
+                .filter(t => t.status === status)
+                .sort((a, b) => (a.dataCriacao || '0000-00-00').localeCompare(b.dataCriacao || '0000-00-00'));
+            col.innerHTML = items.map(t => {
+                let infoHtml = '';
+                if (status === 'done') {
+                    infoHtml = `<div class="text-[10px] text-gray-400 mt-1">In\u00edcio: ${t.dataInicio || '--'} \u00b7 T\u00e9rmino: ${t.dataTermino || '--'}</div>`;
+                } else if (status === 'doing' && t.dataInicio) {
+                    infoHtml = `<div class="text-[10px] text-gray-400 mt-1">In\u00edcio: ${t.dataInicio}</div>`;
+                }
+                const tipoLabel = { licenciamento: 'Licenciamento', fiscalizacao: 'Fiscaliza\u00e7\u00e3o', ouvidoria: 'Ouvidoria', outros: 'Outros' };
+                const tipoCor = { licenciamento: 'bg-emerald-100 text-emerald-700', fiscalizacao: 'bg-red-100 text-red-700', ouvidoria: 'bg-indigo-100 text-indigo-700', outros: 'bg-gray-100 text-gray-600' };
+                const badge = (t.tipo && t.tipo !== 'outros') ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${tipoCor[t.tipo] || tipoCor.outros}">${tipoLabel[t.tipo] || 'Outros'}</span>` : '';
+                return `
+                <div class="kanban-card" draggable="true" data-id="${t.id}" data-status="${status}" data-tipo="${t.tipo || 'outros'}"
+                     ondragstart="kanbanDragStart(event)" ondragend="kanbanDragEnd(event)">
+                    <div class="flex-1 pr-2 min-w-0">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-gray-700 font-medium truncate">${escHtml(t.text)}</span>
+                            ${badge}
+                        </div>
+                        ${infoHtml}
+                        ${t.anotacoes ? (function(){ try{var a=JSON.parse(t.anotacoes);if(a&&a.lista){var f=a.lista.filter(function(i){return i.feito}).length;return '<div class="text-[10px] text-blue-400 mt-1 truncate">Checklist '+f+'/'+a.lista.length+'</div>'}return ''}catch(e){return '<div class="text-[10px] text-blue-400 mt-1 truncate">\u2713 Anota\u00e7\u00f5es</div>'}})() : ''}
+                    </div>
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                        <button class="kanban-note-btn ${t.anotacoes ? 'has-notes' : ''}" onclick="kanbanEditarAnotacoes(${t.id})" title="${t.anotacoes ? 'Editar anota\u00e7\u00f5es' : 'Adicionar anota\u00e7\u00f5es'}">
+                            <i data-lucide="clipboard" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button class="text-gray-300 hover:text-red-500 transition-colors" onclick="kanbanRemove(${t.id})">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        });
+
+        document.getElementById('countTodo').textContent = cTodo;
+        document.getElementById('countDoing').textContent = `${cDoing}/3`;
+        document.getElementById('countDone').textContent = cDone;
+
+        document.getElementById('metricTodo').textContent = cTodo;
+        document.getElementById('metricDoing').textContent = `${cDoing}/3`;
+        document.getElementById('metricDone').textContent = cDone;
+
+        lucide.createIcons();
+    }
+
+    function kanbanAdd() {
+        const input = document.getElementById('kanbanInput');
+        const text = input.value.trim();
+        if (!text) { toast('Digite uma tarefa', 'error'); return; }
+        const tipo = document.getElementById('kanbanTipo').value;
+
+        appState.kanban.push({ id: Date.now(), text, tipo, status: 'todo', dataCriacao: new Date().toISOString().split('T')[0], anotacoes: '', ultimaAtualizacao: '' });
+        dbSave();
+        input.value = '';
+        kanbanRender();
+        toast('Tarefa adicionada em A Fazer');
+    }
+
+    function kanbanDragStart(e) {
+        dragId = parseInt(e.target.dataset.id);
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function kanbanDragEnd(e) {
+        e.target.classList.remove('dragging');
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        dragId = null;
+    }
+
+    function kanbanDragOver(e) {
+        e.preventDefault();
+        e.currentTarget.classList.add('drag-over');
+    }
+    function kanbanDragLeave(e) {
+        e.currentTarget.classList.remove('drag-over');
+    }
+    function kanbanDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('drag-over');
+        const newStatus = e.currentTarget.dataset.status;
+
+        if (newStatus === 'doing' && appState.kanban.filter(t => t.status === 'doing').length >= 3) {
+            toast('Limite WIP atingido! Máximo de 3 tarefas em andamento.', 'error');
+            document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+            return;
+        }
+
+        const task = appState.kanban.find(t => t.id === dragId);
+        if (task && newStatus) {
+            if (newStatus === 'doing' && !task.dataInicio) {
+                task.dataInicio = new Date().toISOString().split('T')[0];
+            }
+            if (newStatus === 'done') {
+                task.dataTermino = new Date().toISOString().split('T')[0];
+            }
+            task.status = newStatus;
+            dbSave();
+            kanbanRender();
+        }
+        dragId = null;
+        document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+    }
+
+    function kanbanRemove(id) {
+        const task = appState.kanban.find(t => t.id === id);
+        modalOpen('Remover Tarefa', `Deseja remover "${task ? escHtml(task.text) : ''}"?`, () => {
+            appState.kanban = appState.kanban.filter(t => t.id !== id);
+            dbSave();
+            kanbanRender();
+            toast('Tarefa removida');
+        });
+    }
+
+    function parseAnotacoes(anotacoes) {
+        if (!anotacoes) return { lista: [], notas: '' };
+        try {
+            const parsed = JSON.parse(anotacoes);
+            if (parsed && typeof parsed === 'object' && Array.isArray(parsed.lista)) return parsed;
+        } catch(e) {}
+        return { lista: [], notas: typeof anotacoes === 'string' ? anotacoes : '' };
+    }
+
+    function stringifyAnotacoes(data) {
+        return JSON.stringify(data);
+    }
+
+    function kanbanEditarAnotacoes(id) {
+        const task = appState.kanban.find(t => t.id === id);
+        if (!task) return;
+
+        const dados = parseAnotacoes(task.anotacoes);
+
+        const overlay = document.getElementById('modalOverlay');
+        document.getElementById('modalTitle').textContent = 'Anota\u00e7\u00f5es da Tarefa';
+        document.getElementById('modalMsg').innerHTML = `
+            <div class="text-xs text-gray-500 mb-2 font-semibold">${escHtml(task.text)}</div>
+            <div class="space-y-2 mb-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Checklist</span>
+                    <span id="checklistStatus" class="text-[10px] font-bold text-blue-600">0/0</span>
+                </div>
+                <div id="checklistContainer" class="space-y-1 max-h-48 overflow-y-auto"></div>
+                <div class="flex gap-2">
+                    <input type="text" id="novoItemChecklist" class="inp flex-1 text-xs" placeholder="Novo item..." onkeydown="if(event.key==='Enter')adicionarItemChecklist()">
+                    <button class="btn btn-sm btn-primary" onclick="adicionarItemChecklist()">+</button>
+                </div>
+            </div>
+            <div class="border-t border-gray-100 pt-2">
+                <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Observa\u00e7\u00f5es</label>
+                <textarea id="notasTextarea" class="inp w-full" style="min-height:60px;resize:vertical;font-size:0.82rem;line-height:1.5;" placeholder="Informa\u00e7\u00f5es adicionais...">${escHtml(dados.notas)}</textarea>
+            </div>
+        `;
+        overlay.classList.add('open');
+
+        window._checklistData = dados.lista;
+        window._taskRef = task;
+        renderChecklist();
+
+        const btn = document.getElementById('modalConfirmBtn');
+        btn.textContent = 'Salvar Anota\u00e7\u00f5es';
+        btn.className = 'btn btn-primary';
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        newBtn.addEventListener('click', function handler() {
+            const notasEl = document.getElementById('notasTextarea');
+            const dadosFinal = { lista: window._checklistData || [], notas: notasEl ? notasEl.value : '' };
+            task.anotacoes = stringifyAnotacoes(dadosFinal);
+            task.ultimaAtualizacao = new Date().toISOString();
+            dbSave();
+            kanbanRender();
+            window._checklistData = null;
+            window._taskRef = null;
+            toast('Anota\u00e7\u00f5es salvas');
+            modalClose();
+        });
+    }
+
+    function renderChecklist() {
+        const container = document.getElementById('checklistContainer');
+        const statusEl = document.getElementById('checklistStatus');
+        if (!container) return;
+        const lista = window._checklistData || [];
+        const feitos = lista.filter(i => i.feito).length;
+        if (statusEl) statusEl.textContent = feitos + '/' + lista.length;
+        container.innerHTML = lista.map((item, idx) => `
+            <div class="flex items-center gap-2 py-1 px-1 rounded hover:bg-gray-50 text-xs">
+                <input type="checkbox" ${item.feito ? 'checked' : ''} onchange="toggleChecklistItem(${idx}, this.checked)" class="w-3.5 h-3.5 accent-blue-600 cursor-pointer flex-shrink-0">
+                <span class="flex-1 ${item.feito ? 'line-through text-gray-400' : 'text-gray-700'}">${escHtml(item.texto)}</span>
+                <button class="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0" onclick="removerChecklistItem(${idx})" style="padding:1px 3px;border:none;background:transparent;cursor:pointer;">
+                    <i data-lucide="x" class="w-3 h-3"></i>
+                </button>
+            </div>
+        `).join('');
+        lucide.createIcons();
+    }
+
+    function adicionarItemChecklist() {
+        const input = document.getElementById('novoItemChecklist');
+        const texto = input.value.trim();
+        if (!texto) return;
+        if (!window._checklistData) window._checklistData = [];
+        window._checklistData.push({ texto, feito: false });
+        input.value = '';
+        renderChecklist();
+    }
+
+    function toggleChecklistItem(idx, checked) {
+        if (window._checklistData && window._checklistData[idx]) {
+            window._checklistData[idx].feito = checked;
+            renderChecklist();
+        }
+    }
+
+    function removerChecklistItem(idx) {
+        if (window._checklistData) {
+            window._checklistData.splice(idx, 1);
+            renderChecklist();
+        }
+    }
+
+    function exportarConcluidos() {
+        const doneTasks = appState.kanban.filter(t => t.status === 'done');
+        if (doneTasks.length === 0) { toast('Nenhuma tarefa conclu\u00edda para exportar', 'warning'); return; }
+
+        const data = doneTasks.map(t => ({
+            tarefa: t.text,
+            dataCriacao: t.dataCriacao || '',
+            dataInicio: t.dataInicio || '',
+            dataTermino: t.dataTermino || '',
+            ultimaAtualizacao: t.ultimaAtualizacao || '',
+            anotacoes: t.anotacoes ? (function(){try{return JSON.parse(t.anotacoes)}catch(e){return t.anotacoes}})() : ''
+        }));
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `concluidos_${new Date().toISOString().split('T')[0]}.json`;
+        a.click(); URL.revokeObjectURL(url);
+        toast(`Exportados ${data.length} registro(s) conclu\u00eddo(s)`);
+    }
+
+    function limparConcluidos() {
+        const count = appState.kanban.filter(t => t.status === 'done').length;
+        if (count === 0) { toast('Nenhuma tarefa conclu\u00edda para limpar', 'warning'); return; }
+        modalOpen('Limpar Conclu\u00eddos', `Deseja remover todas as ${count} tarefa(s) conclu\u00edda(s)?`, () => {
+            appState.kanban = appState.kanban.filter(t => t.status !== 'done');
+            dbSave();
+            kanbanRender();
+            toast(`${count} tarefa(s) conclu\u00edda(s) removida(s)`);
+        }, { btnText: 'Limpar', btnClass: 'btn btn-danger' });
+    }
+
+    // ============================================================
+    // DIRETÓRIO DE LINKS
+    // ============================================================
+    let linkFilter = 'all';
+    window.linkCollapsed = {};
+
+    function linksRenderFilters() {
+        const container = document.getElementById('linkFilters');
+        let html = '<button class="ftab active" data-f="all" onclick="linkSetFilter(\'all\', this)">Todos</button>';
+        for (const key in appState.links) {
+            html += `<button class="ftab" data-f="${key}" onclick="linkSetFilter('${key}', this)">${appState.links[key].nome}</button>`;
+        }
+        container.innerHTML = html;
+    }
+
+    function linkSetFilter(f, btn) {
+        linkFilter = f;
+        document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.link-category-card').forEach(card => {
+            card.style.display = (f === 'all' || card.dataset.key === f) ? '' : 'none';
+        });
+    }
+
+    function toggleLinkCategory(key) {
+        if (!window.linkCollapsed) window.linkCollapsed = {};
+        window.linkCollapsed[key] = !window.linkCollapsed[key];
+        const body = document.getElementById('linkBody_' + key);
+        const chev = document.getElementById('chevron_' + key);
+        if (body) body.classList.toggle('collapsed');
+        if (chev) chev.classList.toggle('collapsed');
+        dbSave();
+    }
+
+    function linksRender() {
+        const grid = document.getElementById('linksGrid');
+        let html = '';
+        for (const key in appState.links) {
+            const cat = appState.links[key];
+            const isCol = window.linkCollapsed && window.linkCollapsed[key];
+            html += `<div class="card link-category-card" data-key="${key}">
+                <div class="card-header">
+                    <div class="ico ${cat.icon}"><i data-lucide="${getIcon(key)}" class="w-[18px] h-[18px]"></i></div>
+                    <div class="flex-1">
+                        <h2 class="font-condensed text-sm font-bold uppercase tracking-wide text-inst-dark">${escHtml(cat.nome)}</h2>
+                        <span class="text-[10px] text-gray-400">${cat.itens.length} links</span>
+                    </div>
+                    <button class="btn btn-sm btn-secondary" onclick="toggleLinkCategory('${key}')" title="Minimizar">
+                        <i data-lucide="chevron-down" class="w-3 h-3 link-chevron ${isCol ? 'collapsed' : ''}" id="chevron_${key}"></i>
+                    </button>
+                    <button class="btn btn-sm btn-secondary" onclick="toggleInlineForm('${key}')"><i data-lucide="plus" class="w-3 h-3"></i></button>
+                </div>
+                <div class="inline-form" id="inlineForm_${key}">
+                    <div class="p-3 border-b border-gray-100 bg-gray-50/50 space-y-2">
+                        <input type="text" id="newLinkNome_${key}" class="inp w-full text-xs" placeholder="Nome do link">
+                        <input type="text" id="newLinkUrl_${key}" class="inp w-full text-xs" placeholder="https://...">
+                        <div class="flex gap-2">
+                            <button class="btn btn-sm btn-primary" onclick="linkAdd('${key}')">Salvar</button>
+                            <button class="btn btn-sm btn-secondary" onclick="toggleInlineForm('${key}')">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="link-body${isCol ? ' collapsed' : ''}" id="linkBody_${key}">
+                    ${cat.itens.map((item, idx) => `
+                        <a href="${escHtml(item.url)}" target="_blank" class="svc-link">
+                            <span class="dot"></span>
+                            <span class="flex-1 truncate">${escHtml(item.nome)}</span>
+                            <button class="btn btn-sm btn-danger flex-shrink-0" style="padding:2px 5px;" onclick="event.preventDefault();event.stopPropagation();linkRemove('${key}',${idx})">
+                                <i data-lucide="trash-2" class="w-3 h-3"></i>
+                            </button>
+                            <svg class="chev w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        </a>
+                    `).join('')}
+                    ${cat.itens.length === 0 ? '<p class="text-xs text-gray-400 text-center py-4">Nenhum link</p>' : ''}
+                </div>
+            </div>`;
+        }
+        grid.innerHTML = html;
+        lucide.createIcons();
+    }
+
+    function toggleInlineForm(key) {
+        const form = document.getElementById('inlineForm_' + key);
+        form.classList.toggle('open');
+    }
+
+    function linkAdd(key) {
+        const nome = document.getElementById('newLinkNome_' + key).value.trim();
+        const url = document.getElementById('newLinkUrl_' + key).value.trim();
+        if (!nome || !url) { toast('Preencha nome e URL', 'error'); return; }
+        try { new URL(url); } catch(e) { toast('URL inválida', 'error'); return; }
+        appState.links[key].itens.push({ nome, url });
+        dbSave();
+        toggleInlineForm(key);
+        linksRenderFilters();
+        linksRender();
+        const activeBtn = document.querySelector(`.ftab[data-f="${linkFilter}"]`)
+                       || document.querySelector('.ftab[data-f="all"]');
+        if (activeBtn) linkSetFilter(linkFilter, activeBtn);
+        toast('Link adicionado');
+    }
+
+    function linkRemove(key, idx) {
+        const item = appState.links[key].itens[idx];
+        modalOpen('Remover Link', `Deseja remover "${item ? escHtml(item.nome) : ''}"?`, () => {
+            appState.links[key].itens.splice(idx, 1);
+            dbSave();
+            linksRender();
+            linksRenderFilters();
+            linkSetFilter(linkFilter, document.querySelector(`.ftab[data-f="${linkFilter}"]`) || document.querySelector('.ftab[data-f="all"]'));
+            toast('Link removido');
+        });
+    }
+
+    function getIcon(key) {
+        const map = { profissional: 'briefcase', fiscalizacao: 'shield-check', pessoal: 'user-check', consultivo: 'bot', noticias: 'newspaper', compras: 'shopping-cart' };
+        return map[key] || 'link';
+    }
+
+    // ============================================================
+    // EXPORT / IMPORT / RESET
+    // ============================================================
+    function dataExport() {
+        const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `sema_backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.click(); URL.revokeObjectURL(url);
+        toast('Dados exportados com sucesso');
+    }
+
+    function dataImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const imported = JSON.parse(e.target.result);
+                appState = {
+                    ponto: { ...DEFAULT_STATE.ponto, ...(imported.ponto || {}) },
+                    reunioes: Array.isArray(imported.reunioes) ? imported.reunioes : [],
+                    kanban: Array.isArray(imported.kanban) ? imported.kanban : [],
+                    links: {}
+                };
+                for (const key in DEFAULT_STATE.links) {
+                    appState.links[key] = {
+                        ...DEFAULT_STATE.links[key],
+                        ...(imported.links && imported.links[key] || {}),
+                        itens: Array.isArray(imported.links && imported.links[key] && imported.links[key].itens)
+                            ? imported.links[key].itens
+                            : DEFAULT_STATE.links[key].itens
+                    };
+                }
+                if (imported.links) {
+                    for (const key in imported.links) {
+                        if (!appState.links[key]) {
+                            appState.links[key] = imported.links[key];
+                        }
+                    }
+                }
+                dbSave();
+                renderAll();
+                toast('Dados importados com sucesso');
+            } catch(err) {
+                toast('Arquivo JSON inválido', 'error');
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    function dataReset() {
+        modalOpen('Resetar Todos os Dados', 'Esta ação irá apagar TODOS os dados e restaurar os valores padrão. Continuar?', () => {
+            appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            dbSave();
+            pontoAlerted = {};
+            pomoReset();
+            renderAll();
+            toast('Dados resetados para o padrão');
+        }, { btnText: 'Resetar', btnClass: 'btn btn-danger' });
+    }
+
+    // ============================================================
+    // UTILITÁRIOS
+    // ============================================================
+    function escHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        const [y,m,d] = dateStr.split('-');
+        const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+        return `${parseInt(d)} ${meses[parseInt(m)-1]} ${y}`;
+    }
+
+    let audioCtx = null;
+
+    function initAudio() {
+        try {
+            if (!audioCtx || audioCtx.state === 'closed') {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        } catch (e) {
+            console.warn('AudioContext indisponivel:', e.message);
+        }
+    }
+
+    function playBeep(freq = 660, dur = 200, times = 2) {
+        try {
+            initAudio();
+            if (!audioCtx) return;
+            for (let i = 0; i < times; i++) {
+                setTimeout(() => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.frequency.value = freq; osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur/1000);
+                    osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + dur/1000);
+                }, i * 280);
+            }
+        } catch (e) {
+            console.warn('Beep indisponivel:', e.message);
+        }
+    }
+
+    // ============================================================
+    // RENDER ALL + INIT
+    // ============================================================
+    function renderAll() {
+        pontoRender();
+        reuniaoRender();
+        kanbanRender();
+        linksRenderFilters();
+        linksRender();
+    }
+
+    function init() {
+        dbLoad();
+        renderAll();
+        pomoReset();
+        updateClock();
+
+        setInterval(updateClock, 1000);
+        setInterval(pontoCheck, 60000);
+        pontoCheck();
+
+        document.getElementById('reuniaoData').value = new Date().toISOString().split('T')[0];
+        lucide.createIcons();
+
+        // Inicializa AudioContext no primeiro clique do usuário
+        document.addEventListener('click', () => initAudio(), { once: true });
+    }
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebarOverlay').classList.toggle('open');
+        lucide.createIcons();
+    }
+
+    function scrollToSection(id) {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function abrirTutorialHome() {
+        const urlAtual = window.location.href;
+
+        const passoPasso = `
+            <div class="text-left space-y-3 mt-3">
+                <p class="text-xs text-gray-600">Os navegadores modernos exigem que voce configure a pagina inicial manualmente por seguranca. Siga o passo a passo para o seu navegador:</p>
+
+                <div class="border-t border-gray-100 pt-2">
+                    <strong class="text-xs text-inst-dark flex items-center gap-1">No Google Chrome / Edge:</strong>
+                    <ol class="list-decimal list-inside text-[11px] text-gray-500 mt-1 space-y-1">
+                        <li>Copie o endereco desta pagina.</li>
+                        <li>Clique nos <strong>tres pontos (Menu)</strong> no canto superior direito e va em <strong>Configuracoes</strong>.</li>
+                        <li>No menu esquerdo, clique em <strong>Inicializacao</strong> (ou <em>Aparencia</em>).</li>
+                        <li>Selecione "Abrir uma pagina especifica" ou ative o "Botao Pagina Inicial" e cole o endereco desta pagina ali.</li>
+                    </ol>
+                </div>
+
+                <div class="border-t border-gray-100 pt-2">
+                    <strong class="text-xs text-inst-dark flex items-center gap-1">Atalho Rapido (Chrome/Firefox):</strong>
+                    <p class="text-[11px] text-gray-500 mt-1">
+                        Clique e segure o <strong>icone de cadeado</strong> (ou a bolinha de informacao) que fica do lado esquerdo do endereco dessa pagina na barra do navegador, e arraste-o direto para o desenho da <strong>Casinha (Home)</strong> no seu navegador.
+                    </p>
+                </div>
+            </div>
+        `;
+
+        modalOpen('Definir Pagina Inicial', passoPasso, null, { btnText: 'Entendi', btnClass: 'btn btn-primary' });
+    }
+
+    init();
+    </script>
+</body>
+</html>
