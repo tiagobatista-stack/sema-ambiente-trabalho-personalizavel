@@ -12,7 +12,7 @@
             theme: {
                 extend: {
                     colors: {
-                        inst: { dark: '#1E2B6E', mid: '#253578', light: '#3b82f6', pale: '#eef2ff', border: '#c7d2fe' }
+                        inst: { dark: '#1e2a5e', mid: '#253578', light: '#3b82f6', pale: '#eef2ff', border: '#c7d2fe' }
                     },
                     fontFamily: { condensed: ['"Roboto Condensed"', 'Calibri', 'sans-serif'] }
                 }
@@ -118,6 +118,7 @@
         .kanban-card::before {
             content: ''; position: absolute; left: 0; top: 15%; bottom: 15%; width: 4px; border-radius: 0 4px 4px 0;
         }
+        .kanban-card[data-status="inbox"]::before { background: #a855f7; }
         .kanban-card[data-status="todo"]::before { background: #d97706; }
         .kanban-card[data-status="doing"]::before { background: #2563eb; }
         .kanban-card[data-status="done"]::before { background: #16a34a; }
@@ -171,81 +172,29 @@
         /* ===== INLINE FORM ===== */
         .inline-form { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
         .inline-form.open { max-height: 200px; }
-        .link-body { max-height: 360px; overflow-y: auto; }
-        .link-body.collapsed { display: none; }
-        .link-chevron { transition: transform 0.25s; }
-        .link-chevron.collapsed { transform: rotate(-90deg); }
 
         /* ===== REUNIÃO DESTAQUE ===== */
         .reuniao-today { border-left: 3px solid #dc2626; background: #fef2f2; }
-
-        /* ===== SIDEBAR ===== */
-        .sidebar-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 500;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s;
-        }
-        .sidebar-overlay.open { opacity: 1; pointer-events: all; }
-
-        .sidebar {
-            position: fixed; top: 0; left: 0; bottom: 0; width: 220px;
-            background: #1E2B6E; z-index: 550; overflow-y: auto;
-            transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
-            box-shadow: 4px 0 20px rgba(0,0,0,0.2);
-        }
-        .sidebar.open { transform: translateX(0); }
-
-        .sidebar-header {
-            padding: 16px; display: flex; align-items: center; justify-content: space-between;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        .sidebar-header h3 { font-size: 0.85rem; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
-        .sidebar-close {
-            background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer;
-            padding: 4px; border-radius: 4px; transition: color 0.2s;
-        }
-        .sidebar-close:hover { color: #fff; }
-
-        .sidebar-nav { padding: 8px 0; }
-        .sidebar-nav a {
-            display: flex; align-items: center; gap: 10px; padding: 10px 16px;
-            color: rgba(255,255,255,0.65); text-decoration: none; font-size: 0.82rem;
-            font-weight: 500; transition: all 0.2s; border-left: 3px solid transparent;
-        }
-        .sidebar-nav a:hover { background: rgba(255,255,255,0.08); color: #fff; border-left-color: #3b82f6; }
-        .sidebar-nav a i { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.7; }
-        .sidebar-nav a:hover i { opacity: 1; }
-        .sidebar-nav .nav-label {
-            font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 0.08em; color: rgba(255,255,255,0.3); padding: 12px 16px 4px;
-        }
-
-        /* ajuste do main quando sidebar aberta em desktop */
-        @media (min-width: 1024px) {
-            .sidebar.open ~ .main-wrapper { margin-left: 220px; }
-        }
     </style>
 </head>
 <body>
 
-    <div style="background:#1E2B6E; height:4px; width:100%;"></div>
+    <div style="background:#1e2a5e; height:4px; width:100%;"></div>
 
-    <header style="background:#1E2B6E; border-bottom:3px solid #1a2356; box-shadow:0 2px 8px rgba(30,42,94,0.08);" class="sticky top-0 z-50">
+    <header style="background:#21307A; border-bottom:3px solid #1e2a5e; box-shadow:0 2px 8px rgba(30,42,94,0.08);" class="sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 md:px-6">
-            <div class="flex items-center justify-between py-2">
-                <div class="flex items-center gap-4">
-                    <img src="https://www.sema.mt.gov.br/site/images/images_desenvolvimento/logo_menor_400.jpeg" alt="Logo SEMA" class="h-16 w-auto object-contain" />
+            <div class="flex items-center justify-between py-3">
+                <div class="flex items-center gap-3">
+                    <img src="https://www.sema.mt.gov.br/site/images/images_desenvolvimento/logo_menor_400.jpeg" alt="Logo SEMA" class="h-14 w-auto object-contain bg-white rounded p-1 shadow-sm" />
                     <div>
                         <h1 class="font-condensed text-xl md:text-2xl font-bold text-white uppercase tracking-wide leading-tight">SEMA-MT
-                        <span class="text-[10px] bg-white/20 text-white px-1.5 py-0.5 rounded font-bold tracking-normal">v1.1.0</span>
+                        <span class="text-[10px] bg-white/20 text-white px-1.5 py-0.5 rounded font-bold tracking-normal">v1.0.1</span>
                         </h1>
                         <p class="text-xs text-blue-100 font-light leading-tight mt-0.5 opacity-90">Secretaria de Estado de Meio Ambiente</p>
 
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
-                    <button class="btn btn-secondary btn-sm flex items-center gap-1" onclick="toggleSidebar()" style="background:transparent;border-color:rgba(255,255,255,0.2);color:#fff;" title="Menu">
-                        <i data-lucide="menu" class="w-4 h-4"></i>
-                    </button>
                     <form action="https://www.google.com/search" method="GET" target="_blank" class="relative hidden md:block">
                         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"></i>
                         <input type="text" name="q" placeholder="Buscar no Google..." class="inp" style="padding-left:34px; width:240px; font-size:0.8rem;">
@@ -262,36 +211,12 @@
         </div>
     </header>
 
-    <!-- SIDEBAR OVERLAY -->
-    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-    <!-- SIDEBAR -->
-    <aside id="sidebar" class="sidebar">
-        <div class="sidebar-header">
-            <h3>Navegação</h3>
-            <button class="sidebar-close" onclick="toggleSidebar()"><i data-lucide="x" class="w-4 h-4"></i></button>
-        </div>
-        <nav class="sidebar-nav">
-            <div class="nav-label">Ferramentas</div>
-            <a href="#" onclick="scrollToSection('pomodoro');toggleSidebar()"><i data-lucide="timer"></i> Pomodoro</a>
-            <a href="#" onclick="scrollToSection('ponto');toggleSidebar()"><i data-lucide="calculator"></i> Jornada</a>
-            <a href="#" onclick="scrollToSection('reunioes');toggleSidebar()"><i data-lucide="users"></i> Reuniões</a>
-            <div class="nav-label">Gestão</div>
-            <a href="#" onclick="scrollToSection('kanban');toggleSidebar()"><i data-lucide="layout-grid"></i> Kanban</a>
-            <a href="#" onclick="scrollToSection('links');toggleSidebar()"><i data-lucide="globe"></i> Links</a>
-            <div class="nav-label">Dados</div>
-            <a href="#" onclick="scrollToSection('dados');toggleSidebar()"><i data-lucide="database"></i> Gerenciamento</a>
-        </nav>
-    </aside>
-
-    <!-- WRAPPER DO CONTEÚDO -->
-    <div class="main-wrapper">
     <main class="max-w-7xl mx-auto px-4 md:px-6 py-5 space-y-6">
 
         <!-- PRIMEIRA LINHA: MINI COMPONENTES (POMODORO, PONTO, REUNIÕES) -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- POMODORO-->
-            <section id="pomodoro" class="card anim" style="animation-delay:0s;">
+            <section class="card anim" style="animation-delay:0s;">
                 <div class="card-header">
                     <div class="ico blue"><i data-lucide="timer" class="w-[18px] h-[18px]"></i></div>
                     <div>
@@ -330,7 +255,7 @@
             </section>
 
             <!-- PONTO / CALCULADORA DE JORNADA FLEXÍVEL (DIRETA OU COM INTERVALO) -->
-            <section id="ponto" class="card anim" style="animation-delay:0.1s;">
+            <section class="card anim" style="animation-delay:0.1s;">
                 <div class="card-header justify-between flex-wrap gap-2">
                     <div class="flex items-center gap-3">
                         <div class="ico amber"><i data-lucide="calculator" class="w-[18px] h-[18px]"></i></div>
@@ -374,14 +299,14 @@
             </section>
 
             <!-- REUNIÃO-->
-            <section id="reunioes" class="card anim" style="animation-delay:0.15s;">
+            <section class="card anim" style="animation-delay:0.15s;">
                 <div class="card-header">
                     <div class="ico purple"><i data-lucide="users" class="w-[18px] h-[18px]"></i></div>
-                    <div><h2 class="font-condensed text-sm font-bold uppercase tracking-wide text-inst-dark">Reuniões/Eventos</h2></div>
+                    <div><h2 class="font-condensed text-sm font-bold uppercase tracking-wide text-inst-dark">Reuniões/Atividades</h2></div>
                 </div>
                 <div class="p-4">
                     <div class="space-y-2 mb-3">
-                        <input type="text" id="reuniaoTitulo" class="inp w-full" placeholder="Assunto da reunião">
+                        <input type="text" id="reuniaoTitulo" class="inp w-full" placeholder="Assunto">
                         <div class="grid grid-cols-2 gap-2">
                             <input type="date" id="reuniaoData" class="inp w-full">
                             <input type="time" id="reuniaoHora" class="inp w-full">
@@ -396,7 +321,7 @@
         <!-- ============================================================ -->
         <!-- SEÇÃO INTEIRA 1: KANBAN (QUADRO DE TAREFAS) -->
         <!-- ============================================================ -->
-        <section id="kanban" class="card anim w-full" style="animation-delay: 0.2s;">
+        <section class="card anim w-full" style="animation-delay: 0.2s;">
             <div class="card-header justify-between flex-wrap gap-4">
                 <div class="flex items-center gap-3">
                     <div class="ico darkblue"><i data-lucide="layout-grid"></i></div>
@@ -406,20 +331,20 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <input type="text" id="kanbanInput" class="inp py-1.5 text-xs w-48" placeholder="Digite uma tarefa..." onkeydown="if(event.key==='Enter')kanbanAdd()">
-                    <select id="kanbanTipo" class="inp py-1.5 text-xs w-28">
-                        <option value="outros">Outros</option>
-                        <option value="licenciamento">Licenciamento</option>
-                        <option value="fiscalizacao">Fiscalização</option>
-                        <option value="ouvidoria">Ouvidoria</option>
-                    </select>
+                    <input type="text" id="kanbanInput" class="inp py-1.5 text-xs w-64" placeholder="Digite uma tarefa..." onkeydown="if(event.key==='Enter')kanbanAdd()">
                     <button class="btn btn-primary p-2" onclick="kanbanAdd()" style="border-radius:6px;"><i data-lucide="plus" class="w-4 h-4"></i></button>
                 </div>
             </div>
 
             <div class="p-4 space-y-5">
                 <!-- Métricas do Kanban -->
-                <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="card p-4 flex flex-col items-center justify-center text-center bg-gray-50/50">
+                        <span id="metricInbox" class="text-2xl font-bold text-purple-600 mb-1">0</span>
+                        <div class="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                            <i data-lucide="inbox" class="w-3.5 h-3.5 text-purple-500"></i> Caixa de Entrada
+                        </div>
+                    </div>
                     <div class="card p-4 flex flex-col items-center justify-center text-center bg-gray-50/50">
                         <span id="metricTodo" class="text-2xl font-bold text-amber-600 mb-1">0</span>
                         <div class="flex items-center gap-1.5 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
@@ -441,7 +366,15 @@
                 </div>
 
                 <!-- Colunas estruturadas lado a lado ocupando 100% da largura -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="kanban-col-wrapper">
+                        <div class="kanban-col-header text-purple-600 border-b-2 border-purple-200">
+                            <span class="flex items-center gap-1.5"><i data-lucide="inbox" class="w-3.5 h-3.5"></i> Caixa de Entrada</span>
+                            <span id="countInbox" class="text-[10px] bg-purple-100 px-2 py-0.5 rounded-full">0</span>
+                        </div>
+                        <div id="kanbanInbox" class="space-y-2 min-h-[180px] kanban-scroll" data-status="inbox" ondragover="kanbanDragOver(event)" ondrop="kanbanDrop(event)" ondragleave="kanbanDragLeave(event)"></div>
+                    </div>
+
                     <div class="kanban-col-wrapper">
                         <div class="kanban-col-header text-amber-600 border-b-2 border-amber-200">
                             <span class="flex items-center gap-1.5"><i data-lucide="file-text" class="w-3.5 h-3.5"></i> A Fazer</span>
@@ -476,7 +409,7 @@
         <!-- ============================================================ -->
         <!-- SEÇÃO INTEIRA 2: DIRETÓRIO DE LINKS -->
         <!-- ============================================================ -->
-        <section id="links" class="card anim w-full" style="animation-delay:0.25s;">
+        <section class="card anim w-full" style="animation-delay:0.25s;">
             <div class="card-header">
                 <div class="ico green"><i data-lucide="globe" class="w-[18px] h-[18px]"></i></div>
                 <div><h2 class="font-condensed text-sm font-bold uppercase tracking-wide text-inst-dark">Diretório de Links</h2></div>
@@ -490,15 +423,15 @@
         <!-- ============================================================ -->
         <!-- SEÇÃO INTEIRA 3: GERENCIAMENTO DE DADOS -->
         <!-- ============================================================ -->
-        <section id="dados" class="card anim w-full" style="animation-delay:0.3s;">
+        <section class="card anim w-full" style="animation-delay:0.3s;">
             <div class="card-header">
                 <div class="ico teal"><i data-lucide="database" class="w-[18px] h-[18px]"></i></div>
                 <div><h2 class="font-condensed text-sm font-bold uppercase tracking-wide text-inst-dark">Gerenciamento de Dados</h2></div>
             </div>
             <div class="p-4 flex flex-wrap gap-3">
-                <button class="btn btn-primary" onclick="dataExport()"><i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar Dados</button>
+                <button class="btn btn-primary" onclick="dataExport()"><i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar Dados (JSON)</button>
                 <label class="btn btn-secondary cursor-pointer">
-                    <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importar Dados
+                    <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importar Dados (JSON)
                     <input type="file" accept=".json" class="hidden" onchange="dataImport(event)">
                 </label>
                 <button class="btn btn-danger" onclick="dataReset()"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Resetar Tudo</button>
@@ -506,14 +439,13 @@
         </section>
 
     </main>
-    </div><!-- .main-wrapper -->
 
-    <footer style="background:#1E2B6E;" class="mt-6">
+    <footer style="background:#1e2a5e;" class="mt-6">
         <div class="max-w-7xl mx-auto px-4 md:px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-2">
             <div class="text-xs text-white/70 font-normal">
-                Secretaria de Estado de Meio Ambiente · Mato Grosso · <span class="bg-blue-900/50 px-2 py-0.5 rounded text-white/90 text-[10px] font-bold">v1.1.0</span>
+                Secretaria de Estado de Meio Ambiente · Mato Grosso · <span class="bg-blue-900/50 px-2 py-0.5 rounded text-white/90 text-[10px] font-bold">v1.0.1</span>
             </div>
-            <span class="text-[13px] text-white/60">© 2026 SEMA-MT — Dashboard de Produtividade · Dev: <strong class="text-white font-bold">Tiago Alexandre Batista</strong></span>
+            <span class="text-[11px] text-white/40">© 2026 SEMA-MT — Dashboard de Produtividade · Dev: Tiago Alexandre Batista</span>
         </div>
     </footer>
 
@@ -605,7 +537,6 @@
     let appState = {};
 
     function dbSave() {
-        appState.linkCollapsed = window.linkCollapsed || {};
         try { localStorage.setItem(DB_KEY, JSON.stringify(appState)); } catch(e) { console.error('dbSave error', e); }
     }
 
@@ -629,15 +560,12 @@
                             : DEFAULT_STATE.links[key].itens
                     };
                 }
-                window.linkCollapsed = parsed.linkCollapsed || {};
             } else {
                 appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
-                window.linkCollapsed = {};
             }
         } catch(e) {
             console.error('dbLoad error', e);
             appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
-            window.linkCollapsed = {};
         }
     }
 
@@ -1001,22 +929,18 @@
     let dragId = null;
 
     function kanbanRender() {
-        const statuses = ['todo', 'doing', 'done'];
+        const statuses = ['inbox', 'todo', 'doing', 'done'];
 
+        const cInbox = appState.kanban.filter(t => t.status === 'inbox').length;
         const cTodo = appState.kanban.filter(t => t.status === 'todo').length;
         const cDoing = appState.kanban.filter(t => t.status === 'doing').length;
         const cDone = appState.kanban.filter(t => t.status === 'done').length;
-
-        const todoEl = document.getElementById('kanbanTodo');
-        if (todoEl) todoEl.classList.toggle('kanban-scroll', cTodo >= 6);
 
         statuses.forEach(status => {
             const col = document.getElementById('kanban' + status.charAt(0).toUpperCase() + status.slice(1));
             if (!col) return;
 
-            const items = appState.kanban
-                .filter(t => t.status === status)
-                .sort((a, b) => (a.dataCriacao || '0000-00-00').localeCompare(b.dataCriacao || '0000-00-00'));
+            const items = appState.kanban.filter(t => t.status === status);
             col.innerHTML = items.map(t => {
                 let infoHtml = '';
                 if (status === 'done') {
@@ -1024,17 +948,11 @@
                 } else if (status === 'doing' && t.dataInicio) {
                     infoHtml = `<div class="text-[10px] text-gray-400 mt-1">In\u00edcio: ${t.dataInicio}</div>`;
                 }
-                const tipoLabel = { licenciamento: 'Licenciamento', fiscalizacao: 'Fiscaliza\u00e7\u00e3o', ouvidoria: 'Ouvidoria', outros: 'Outros' };
-                const tipoCor = { licenciamento: 'bg-emerald-100 text-emerald-700', fiscalizacao: 'bg-red-100 text-red-700', ouvidoria: 'bg-indigo-100 text-indigo-700', outros: 'bg-gray-100 text-gray-600' };
-                const badge = (t.tipo && t.tipo !== 'outros') ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${tipoCor[t.tipo] || tipoCor.outros}">${tipoLabel[t.tipo] || 'Outros'}</span>` : '';
                 return `
-                <div class="kanban-card" draggable="true" data-id="${t.id}" data-status="${status}" data-tipo="${t.tipo || 'outros'}"
+                <div class="kanban-card" draggable="true" data-id="${t.id}" data-status="${status}"
                      ondragstart="kanbanDragStart(event)" ondragend="kanbanDragEnd(event)">
-                    <div class="flex-1 pr-2 min-w-0">
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <span class="text-gray-700 font-medium truncate">${escHtml(t.text)}</span>
-                            ${badge}
-                        </div>
+                    <div class="flex-1 pr-2">
+                        <div class="text-gray-700 font-medium">${escHtml(t.text)}</div>
                         ${infoHtml}
                         ${t.anotacoes ? (function(){ try{var a=JSON.parse(t.anotacoes);if(a&&a.lista){var f=a.lista.filter(function(i){return i.feito}).length;return '<div class="text-[10px] text-blue-400 mt-1 truncate">Checklist '+f+'/'+a.lista.length+'</div>'}return ''}catch(e){return '<div class="text-[10px] text-blue-400 mt-1 truncate">\u2713 Anota\u00e7\u00f5es</div>'}})() : ''}
                     </div>
@@ -1050,10 +968,12 @@
             `}).join('');
         });
 
+        document.getElementById('countInbox').textContent = cInbox;
         document.getElementById('countTodo').textContent = cTodo;
         document.getElementById('countDoing').textContent = `${cDoing}/3`;
         document.getElementById('countDone').textContent = cDone;
 
+        document.getElementById('metricInbox').textContent = cInbox;
         document.getElementById('metricTodo').textContent = cTodo;
         document.getElementById('metricDoing').textContent = `${cDoing}/3`;
         document.getElementById('metricDone').textContent = cDone;
@@ -1065,13 +985,12 @@
         const input = document.getElementById('kanbanInput');
         const text = input.value.trim();
         if (!text) { toast('Digite uma tarefa', 'error'); return; }
-        const tipo = document.getElementById('kanbanTipo').value;
 
-        appState.kanban.push({ id: Date.now(), text, tipo, status: 'todo', dataCriacao: new Date().toISOString().split('T')[0], anotacoes: '', ultimaAtualizacao: '' });
+        appState.kanban.push({ id: Date.now(), text, status: 'inbox', dataCriacao: new Date().toISOString().split('T')[0], anotacoes: '', ultimaAtualizacao: '' });
         dbSave();
         input.value = '';
         kanbanRender();
-        toast('Tarefa adicionada em A Fazer');
+        toast('Tarefa capturada na Caixa de Entrada');
     }
 
     function kanbanDragStart(e) {
@@ -1273,7 +1192,6 @@
     // DIRETÓRIO DE LINKS
     // ============================================================
     let linkFilter = 'all';
-    window.linkCollapsed = {};
 
     function linksRenderFilters() {
         const container = document.getElementById('linkFilters');
@@ -1293,22 +1211,11 @@
         });
     }
 
-    function toggleLinkCategory(key) {
-        if (!window.linkCollapsed) window.linkCollapsed = {};
-        window.linkCollapsed[key] = !window.linkCollapsed[key];
-        const body = document.getElementById('linkBody_' + key);
-        const chev = document.getElementById('chevron_' + key);
-        if (body) body.classList.toggle('collapsed');
-        if (chev) chev.classList.toggle('collapsed');
-        dbSave();
-    }
-
     function linksRender() {
         const grid = document.getElementById('linksGrid');
         let html = '';
         for (const key in appState.links) {
             const cat = appState.links[key];
-            const isCol = window.linkCollapsed && window.linkCollapsed[key];
             html += `<div class="card link-category-card" data-key="${key}">
                 <div class="card-header">
                     <div class="ico ${cat.icon}"><i data-lucide="${getIcon(key)}" class="w-[18px] h-[18px]"></i></div>
@@ -1316,9 +1223,6 @@
                         <h2 class="font-condensed text-sm font-bold uppercase tracking-wide text-inst-dark">${escHtml(cat.nome)}</h2>
                         <span class="text-[10px] text-gray-400">${cat.itens.length} links</span>
                     </div>
-                    <button class="btn btn-sm btn-secondary" onclick="toggleLinkCategory('${key}')" title="Minimizar">
-                        <i data-lucide="chevron-down" class="w-3 h-3 link-chevron ${isCol ? 'collapsed' : ''}" id="chevron_${key}"></i>
-                    </button>
                     <button class="btn btn-sm btn-secondary" onclick="toggleInlineForm('${key}')"><i data-lucide="plus" class="w-3 h-3"></i></button>
                 </div>
                 <div class="inline-form" id="inlineForm_${key}">
@@ -1331,7 +1235,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="link-body${isCol ? ' collapsed' : ''}" id="linkBody_${key}">
+                <div>
                     ${cat.itens.map((item, idx) => `
                         <a href="${escHtml(item.url)}" target="_blank" class="svc-link">
                             <span class="dot"></span>
@@ -1528,17 +1432,6 @@
 
         // Inicializa AudioContext no primeiro clique do usuário
         document.addEventListener('click', () => initAudio(), { once: true });
-    }
-
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-        document.getElementById('sidebarOverlay').classList.toggle('open');
-        lucide.createIcons();
-    }
-
-    function scrollToSection(id) {
-        const el = document.getElementById(id);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function abrirTutorialHome() {
